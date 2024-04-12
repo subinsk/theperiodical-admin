@@ -20,16 +20,23 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
+import { v4 as uuidv4 } from "uuid";
 
-export const CreateGistDialog = ({
+export const CreateTopicDialog = ({
   open,
+  selectedTopic,
+  setSelectedTopic,
   setOpen,
   setTopics,
 }: {
   open: boolean;
+  selectedTopic?: { id: string; title: string; content: string };
+  setSelectedTopic?: React.Dispatch<
+    React.SetStateAction<{ id: string; title: string; content: string } | null>
+  >;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setTopics: React.Dispatch<
-    React.SetStateAction<{ title: string; content: string }[]>
+    React.SetStateAction<{ id: string; title: string; content: string }[]>
   >;
 }): JSX.Element => {
   // hooks
@@ -60,8 +67,22 @@ export const CreateGistDialog = ({
   // functions
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     console.log(values);
-    setTopics((prev) => [...prev, values]);
+
+    if (selectedTopic) {
+      setTopics((prev) =>
+        prev.map((topic) =>
+          topic.id === selectedTopic.id ? { id: topic.id, ...values } : topic
+        )
+      );
+    } else {
+      setTopics((prev) => [...prev, { id: uuidv4(), ...values }]);
+    }
+
     setOpen(false);
+    form.reset();
+    if (setSelectedTopic) {
+      setSelectedTopic(null);
+    }
   };
 
   // effects
@@ -70,6 +91,13 @@ export const CreateGistDialog = ({
       form.setValue("content", "");
     }
   }, [form, watchContent]);
+
+  useEffect(() => {
+    if (selectedTopic) {
+      form.setValue("title", selectedTopic.title);
+      form.setValue("content", selectedTopic.content);
+    }
+  }, [form, selectedTopic]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -119,7 +147,7 @@ export const CreateGistDialog = ({
               />
             </Stack>
             <Button type="submit" className="mt-5">
-              Add
+              {selectedTopic ? "Update" : "Add"}
             </Button>
           </form>
         </Form>

@@ -17,18 +17,94 @@ import {
   Stack,
   Typography,
 } from "@/components";
-import { CreateGistDialog } from "@/sections/gists/create/create-gist-dialog";
+import { CreateTopicDialog } from "@/sections/gists/create/create-topic-dialog";
 import { useState } from "react";
+import { Icon } from "@iconify/react";
+import { DeleteConfirmDialog } from "@/sections/gists/create/delete-confirm-dialog";
+
+const TopicCard = ({
+  id,
+  title,
+  content,
+  setTopics,
+}: {
+  id: string;
+  title: string;
+  content: string;
+  setTopics: React.Dispatch<
+    React.SetStateAction<{ id: string; title: string; content: string }[]>
+  >;
+}) => {
+  const [openDeleteConfirmDialog, setOpenDeleteConfirmDialog] =
+    useState<boolean>(false);
+  const [openEditTopicDialog, setOpenEditTopicDialog] =
+    useState<boolean>(false);
+  const [selectedTopic, setSelectedTopic] = useState<{
+    id: string;
+    title: string;
+    content: string;
+  } | null>(null);
+
+  return (
+    <Card>
+      <CardHeader>
+        <Stack direction="row" align="center" justify="between">
+          <CardTitle>{title}</CardTitle>
+          <Stack direction="row" gap={2}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                setSelectedTopic({ id, title, content });
+                setOpenEditTopicDialog(true);
+              }}
+            >
+              <Icon icon="tabler:pencil" width={16} height={16} />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                setSelectedTopic({ id, title, content });
+                setOpenDeleteConfirmDialog(true);
+              }}
+            >
+              <Icon icon="tabler:trash" width={16} height={16} />
+            </Button>
+            <CreateTopicDialog
+              open={openEditTopicDialog}
+              selectedTopic={selectedTopic || undefined}
+              setSelectedTopic={setSelectedTopic}
+              setOpen={setOpenEditTopicDialog}
+              setTopics={setTopics}
+            />
+            <DeleteConfirmDialog
+              open={openDeleteConfirmDialog}
+              selectedTopicId={selectedTopic?.id || ""}
+              setOpen={setOpenDeleteConfirmDialog}
+              setSelectedTopic={setSelectedTopic}
+              setTopics={setTopics}
+            />
+          </Stack>
+        </Stack>
+      </CardHeader>
+      <CardContent>
+        <div dangerouslySetInnerHTML={{ __html: content }} />
+      </CardContent>
+    </Card>
+  );
+};
 
 export default function CreateGistView(): JSX.Element {
   // states
   const [topics, setTopics] = useState<
     {
+      id: string;
       title: string;
       content: string;
     }[]
   >([]);
-  const [openCreateGistDialog, setOpenCreateGistDialog] =
+  const [openCreateTopicDialog, setOpenCreateTopicDialog] =
     useState<boolean>(false);
 
   return (
@@ -49,12 +125,12 @@ export default function CreateGistView(): JSX.Element {
                     done.
                   </CardDescription>
                 </Stack>
-                <Button onClick={() => setOpenCreateGistDialog(true)}>
+                <Button onClick={() => setOpenCreateTopicDialog(true)}>
                   Add Topic
                 </Button>
-                <CreateGistDialog
-                  open={openCreateGistDialog}
-                  setOpen={setOpenCreateGistDialog}
+                <CreateTopicDialog
+                  open={openCreateTopicDialog}
+                  setOpen={setOpenCreateTopicDialog}
                   setTopics={setTopics}
                 />
               </Stack>
@@ -69,18 +145,7 @@ export default function CreateGistView(): JSX.Element {
                 ) : null}
                 <Stack gap={2}>
                   {topics.map((topic, index) => (
-                    <Card key={index}>
-                      <CardHeader>
-                        <CardTitle>{topic.title}</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div
-                          dangerouslySetInnerHTML={{
-                            __html: topic.content,
-                          }}
-                        />
-                      </CardContent>
-                    </Card>
+                    <TopicCard key={index} setTopics={setTopics} {...topic} />
                   ))}
                 </Stack>
               </Stack>
