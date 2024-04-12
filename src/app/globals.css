@@ -122,6 +122,12 @@ input:checked.defaultCheckbox::before {
   opacity: 1;
 }
 
+.ql-editor {
+  font-family: "DM Sans", sans-serif;
+  min-height: 200px;
+  max-height: 640px;
+}
+
 .react-calendar {
   border: 0px solid !important;
   background-color: transparent;
