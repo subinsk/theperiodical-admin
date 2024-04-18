@@ -41,6 +41,24 @@ export async function PUT(
 
   return Response.json({
     message: "Gist updated successfully!",
+    success: true,
+    data: response,
+  });
+}
+
+export async function DELETE(
+  req: Request,
+  { params }: { params: { slug: string } }
+) {
+  const response = await prisma.gist.delete({
+    where: {
+      slug: params.slug,
+    },
+  });
+
+  return Response.json({
+    message: "Gist deleted successfully!",
+    success: true,
     data: response,
   });
 }

@@ -28,3 +28,13 @@ export const createGist = async (payload: any) => {
   const response = await api.post(endpoints.gist, payload);
   return response.data;
 };
+
+export const updateGist = async (slug: string, payload: any) => {
+  const response = await api.put(`${endpoints.gist}/${slug}`, payload);
+  return response.data;
+};
+
+export const deleteGist = async (slug: string) => {
+  const response = await api.delete(`${endpoints.gist}/${slug}`);
+  return response.data;
+};

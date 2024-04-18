@@ -63,8 +63,8 @@ export function Navbar(props: {
         </p>
       </div>
 
-      <div className="relative mt-[3px] flex h-[61px] w-[355px] flex-grow items-center justify-around gap-2 rounded-full bg-white px-2 py-2 shadow-xl shadow-shadow-500 dark:!bg-navy-800 dark:shadow-none md:w-[365px] md:flex-grow-0 md:gap-1 xl:w-[365px] xl:gap-2">
-        <div className="flex h-full items-center rounded-full bg-lightPrimary text-navy-700 dark:bg-navy-900 dark:text-white xl:w-[225px]">
+      <div className="relative mt-[3px] flex h-[61px]  flex-grow items-center justify-around gap-2 rounded-full bg-white px-2 py-2 shadow-xl shadow-shadow-500 dark:!bg-navy-800 dark:shadow-none  md:flex-grow-0 md:gap-1  xl:gap-2">
+        {/* <div className="flex h-full items-center rounded-full bg-lightPrimary text-navy-700 dark:bg-navy-900 dark:text-white xl:w-[225px]">
           <p className="pl-3 pr-2 text-xl">
             <FiSearch className="h-4 w-4 text-gray-400 dark:text-white" />
           </p>
@@ -73,7 +73,7 @@ export function Navbar(props: {
             placeholder="Search..."
             type="text"
           />
-        </div>
+        </div> */}
         <button
           className="flex cursor-pointer text-xl text-gray-600 dark:text-white xl:hidden"
           onClick={onOpenSidenav}
@@ -81,7 +81,7 @@ export function Navbar(props: {
         >
           <FiAlignJustify className="h-5 w-5" />
         </button>
-        <Dropdown
+        {/* <Dropdown
           animation="origin-[65%_0%] md:origin-top-right transition-all duration-300 ease-in-out"
           button={
             <p className="cursor-pointer">
@@ -128,7 +128,7 @@ export function Navbar(props: {
               </div>
             </button>
           </div>
-        </Dropdown>
+        </Dropdown> */}
         <div
           className="cursor-pointer text-gray-600"
           onClick={() => {
@@ -162,16 +162,17 @@ export function Navbar(props: {
         </div>
         <Dropdown
           button={
-            session?.data?.user?.image?
-            <Image
-              alt="Elon Musk"
-              className="h-10 w-10 rounded-full"
-              height="20"
-              src={session.data.user.image}
-              width="2"
-            />
-            :
-            <></>
+            session?.data?.user?.image ? (
+              <Image
+                alt="Elon Musk"
+                className="h-10 w-10 rounded-full"
+                height="20"
+                src={session.data.user.image}
+                width="2"
+              />
+            ) : (
+              <></>
+            )
           }
           classNames="py-2 top-8 -left-[180px] w-max"
         >
@@ -179,8 +180,8 @@ export function Navbar(props: {
             <div className="ml-4 mt-3">
               <div className="flex items-center gap-2">
                 <p className="text-sm font-bold text-navy-700 dark:text-white">
-                  👋 Hey, Adela
-                </p>{" "}
+                  👋 Hey, {session?.data?.user?.name}
+                </p>
               </div>
             </div>
             <div className="mt-3 h-px w-full bg-gray-200 dark:bg-white/20 " />

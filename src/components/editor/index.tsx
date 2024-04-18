@@ -25,6 +25,10 @@ export const Editor = ({
       value={value}
       onChange={onChange}
       readOnly={readOnly}
+      style={{
+        maxHeight: "300px",
+        overflow: "auto",
+      }}
       placeholder={placeholder}
       {...props}
     />

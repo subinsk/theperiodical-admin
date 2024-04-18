@@ -15,7 +15,7 @@ export function Links(props: { routes: RoutesType[] }): JSX.Element {
   const activeRoute = useCallback(
     (routeName: string) => {
       console.log(pathname, routeName);
-      return pathname === routeName;
+      return routeName.includes(pathname);
     },
     [pathname]
   );
