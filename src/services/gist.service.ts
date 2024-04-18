@@ -1,5 +1,4 @@
 import { api, endpoints } from "@/lib/axios";
-import axios from "axios";
 import { useMemo } from "react";
 import useSWR from "swr";
 
