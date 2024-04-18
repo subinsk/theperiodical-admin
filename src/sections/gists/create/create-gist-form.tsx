@@ -43,7 +43,6 @@ export default function CreateGistForm({
     defaultValues: {
       title: "",
       description: "",
-      content: "",
       from: new Date(),
       to: new Date(),
     },

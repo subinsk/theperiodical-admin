@@ -41,21 +41,19 @@ export default function CreateGistView({
 
   // effects
   useEffect(() => {
-    if (data[0]) {
+    if (slug && data[0]) {
       setGistId(data[0].id as string);
       setGistDetails(data[0]);
       setTopics((data[0]?.topics as any) || []);
     }
-  }, [data]);
-
-  console.log("data: ", data);
+  }, [data, slug]);
 
   if (isLoading) {
     return (
       <Stack align="center" justify="center" className="h-screen w-full">
         <Stack direction="row" gap={4} align="center">
-          <Loader2 className="mr-2 h-20 w-20 animate-spin" />
-          <Typography variant="h3">Loading...</Typography>
+          <Loader2 className="mr-2 h-10 w-10 animate-spin" />
+          <Typography variant="h4">Loading...</Typography>
         </Stack>
       </Stack>
     );

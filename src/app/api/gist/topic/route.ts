@@ -18,7 +18,6 @@ export async function POST(req: Request) {
   const res = await req.json();
   const authObj: any = await auth();
 
-  console.log("res", res);
   const response = await prisma.topic.create({
     data: {
       title: res.title,

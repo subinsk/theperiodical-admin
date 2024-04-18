@@ -15,8 +15,6 @@ export const gistSchema = z.object({
   description: z.string().min(1, {
     message: "Description must not be blank",
   }),
-
-  content: z.string(),
   from: z.date({
     required_error: "From date is required",
   }),

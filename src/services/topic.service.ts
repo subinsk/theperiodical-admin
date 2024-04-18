@@ -9,3 +9,8 @@ export const updateTopic = async (id: string, payload: any) => {
   const response = await api.put(`${endpoints.topic}/${id}`, payload);
   return response.data;
 };
+
+export const deleteTopic = async (id: string) => {
+  const response = await api.delete(`${endpoints.topic}/${id}`);
+  return response.data;
+};
