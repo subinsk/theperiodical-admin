@@ -21,6 +21,7 @@ import { CreateTopicDialog } from "@/sections/gists/create/create-topic-dialog";
 import { useState } from "react";
 import { Icon } from "@iconify/react";
 import { DeleteConfirmDialog } from "@/sections/gists/create/delete-confirm-dialog";
+import CreateGistForm from "@/sections/gists/create/create-gist-form";
 
 const TopicCard = ({
   id,
@@ -106,77 +107,88 @@ export default function CreateGistView(): JSX.Element {
   >([]);
   const [openCreateTopicDialog, setOpenCreateTopicDialog] =
     useState<boolean>(false);
+  const [gistId, setGistId] = useState<string>("");
 
   return (
     <div>
-      <Tabs defaultValue="edit">
-        <TabsList className="grid w-[400px] mx-auto grid-cols-2">
-          <TabsTrigger value="edit">Edit</TabsTrigger>
-          <TabsTrigger value="preview">Preview</TabsTrigger>
-        </TabsList>
-        <TabsContent value="edit">
-          <Card>
-            <CardHeader>
-              <Stack direction="row" align="center" justify="between">
-                <Stack>
-                  <CardTitle>Edit</CardTitle>
-                  <CardDescription>
-                    Make changes to the gist here. Click save when you&apos;re
-                    done.
-                  </CardDescription>
+      {!gistId ? (
+        <Stack gap={3}>
+          <Typography variant="h3">Create Gist</Typography>
+          <CreateGistForm setGistId={setGistId} />
+        </Stack>
+      ) : (
+        <Tabs defaultValue="edit">
+          <TabsList className="grid w-[400px] mx-auto grid-cols-2">
+            <TabsTrigger value="edit">Edit</TabsTrigger>
+            <TabsTrigger value="preview">Preview</TabsTrigger>
+          </TabsList>
+          <TabsContent value="edit">
+            <Card>
+              <CardHeader>
+                <Stack direction="row" align="center" justify="between">
+                  <Stack>
+                    <CardTitle>Edit</CardTitle>
+                    <CardDescription>
+                      Make changes to the gist here. Click save when you&apos;re
+                      done.
+                    </CardDescription>
+                  </Stack>
+                  <Stack direction="row" align="center">
+                    <Button variant="outline">Save</Button>
+                    <Button onClick={() => setOpenCreateTopicDialog(true)}>
+                      Add Topic
+                    </Button>
+                    <CreateTopicDialog
+                      open={openCreateTopicDialog}
+                      setOpen={setOpenCreateTopicDialog}
+                      setTopics={setTopics}
+                    />
+                  </Stack>
                 </Stack>
-                <Button onClick={() => setOpenCreateTopicDialog(true)}>
-                  Add Topic
-                </Button>
-                <CreateTopicDialog
-                  open={openCreateTopicDialog}
-                  setOpen={setOpenCreateTopicDialog}
-                  setTopics={setTopics}
-                />
-              </Stack>
-            </CardHeader>
-            <CardContent>
-              <Stack gap={2}>
-                <Typography variant="h3">Topics</Typography>
-                {topics.length === 0 ? (
-                  <Typography variant="p" color="info">
-                    No topics added yet
-                  </Typography>
-                ) : null}
+              </CardHeader>
+              <CardContent>
                 <Stack gap={2}>
-                  {topics.map((topic, index) => (
-                    <TopicCard key={index} setTopics={setTopics} {...topic} />
-                  ))}
+                  <Typography variant="h3">Topics</Typography>
+                  {topics.length === 0 ? (
+                    <Typography variant="p" color="info">
+                      No topics added yet
+                    </Typography>
+                  ) : null}
+                  <Stack gap={2}>
+                    {topics.map((topic, index) => (
+                      <TopicCard key={index} setTopics={setTopics} {...topic} />
+                    ))}
+                  </Stack>
                 </Stack>
-              </Stack>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="preview">
-          <Card>
-            <CardHeader>
-              <CardTitle>Preview</CardTitle>
-              <CardDescription>
-                Change your password here. After saving, you&apos;ll be logged
-                out.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div className="space-y-1">
-                <Label htmlFor="current">Current password</Label>
-                <InputField id="current" type="password" />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="new">New password</Label>
-                <InputField id="new" type="password" />
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button>Save password</Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="preview">
+            <Card>
+              <CardHeader>
+                <CardTitle>Preview</CardTitle>
+                <CardDescription>
+                  Change your password here. After saving, you&apos;ll be logged
+                  out.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="space-y-1">
+                  <Label htmlFor="current">Current password</Label>
+                  <InputField id="current" type="password" />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="new">New password</Label>
+                  <InputField id="new" type="password" />
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button>Save password</Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      )}
     </div>
   );
 }

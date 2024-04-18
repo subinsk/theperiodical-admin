@@ -1,3 +1,4 @@
+import { PrismaAdapter } from "@auth/prisma-adapter";
 import GithubProvider from "next-auth/providers/github";
 import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
@@ -24,6 +25,7 @@ async function getUser(email: string): Promise<User | null> {
 
 export const authConfig = {
   secret: process.env.AUTH_SECRET,
+  adapter: PrismaAdapter(prisma),
   pages: {
     signIn: "/auth/login",
   },

@@ -21,6 +21,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
+import { topicSchema } from "@/schema";
 
 export const CreateTopicDialog = ({
   open,
@@ -40,22 +41,9 @@ export const CreateTopicDialog = ({
   >;
 }): JSX.Element => {
   // hooks
-  const formSchema = z.object({
-    title: z
-      .string()
-      .min(1, {
-        message: "Title must not be blank",
-      })
-      .max(100, {
-        message: "Title must not be longer than 100 characters",
-      }),
-    content: z.string().min(1, {
-      message: "Content must not be blank",
-    }),
-  });
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<typeof topicSchema>>({
+    resolver: zodResolver(topicSchema),
     defaultValues: {
       title: "",
       content: "",
@@ -65,7 +53,7 @@ export const CreateTopicDialog = ({
   const watchContent = form.watch("content");
 
   // functions
-  const onSubmit = (values: z.infer<typeof formSchema>) => {
+  const onSubmit = (values: z.infer<typeof topicSchema>) => {
     console.log(values);
 
     if (selectedTopic) {

@@ -1,10 +1,10 @@
 export type User = {
   id: string;
-  name: string;
+  name: string | null;
+  image: string | null;
   email: string;
-  emailVerified: Date | null;
   password: string;
-  role: string;
+  emailVerified: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };

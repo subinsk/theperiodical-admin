@@ -12,8 +12,22 @@ export default function LoginView(): JSX.Element {
   const [password, setPassword] = useState<string>("");
 
   // functions
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (!email || !password) {
+      alert("Please fill in all fields");
+      return;
+    }
+
+    await signIn("credentials", {
+      email,
+      password,
+      redirect: false,
+    });
+
+    setEmail("");
+    setPassword("");
   };
 
   return (
