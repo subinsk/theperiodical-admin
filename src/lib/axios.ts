@@ -23,6 +23,7 @@ export const fetcher = async (
 
 export const endpoints = {
   gist: "/gist",
+  topic: "/gist/topic",
 };
 
 export { api };

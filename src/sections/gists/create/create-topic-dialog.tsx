@@ -18,10 +18,12 @@ import {
 } from "@/components";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { v4 as uuidv4 } from "uuid";
 import { topicSchema } from "@/schema";
+import { addTopic, updateTopic } from "@/services/topic.service";
+import toast from "react-hot-toast";
 
 export const CreateTopicDialog = ({
   open,
@@ -29,6 +31,7 @@ export const CreateTopicDialog = ({
   setSelectedTopic,
   setOpen,
   setTopics,
+  gistId,
 }: {
   open: boolean;
   selectedTopic?: { id: string; title: string; content: string };
@@ -39,9 +42,9 @@ export const CreateTopicDialog = ({
   setTopics: React.Dispatch<
     React.SetStateAction<{ id: string; title: string; content: string }[]>
   >;
+  gistId: string;
 }): JSX.Element => {
   // hooks
-
   const form = useForm<z.infer<typeof topicSchema>>({
     resolver: zodResolver(topicSchema),
     defaultValues: {
@@ -52,24 +55,67 @@ export const CreateTopicDialog = ({
 
   const watchContent = form.watch("content");
 
+  // states
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
   // functions
-  const onSubmit = (values: z.infer<typeof topicSchema>) => {
-    console.log(values);
-
+  const getButtonText = () => {
     if (selectedTopic) {
-      setTopics((prev) =>
-        prev.map((topic) =>
-          topic.id === selectedTopic.id ? { id: topic.id, ...values } : topic
-        )
-      );
-    } else {
-      setTopics((prev) => [...prev, { id: uuidv4(), ...values }]);
+      if (isSubmitting) {
+        return "Updating...";
+      }
+      return "Update";
     }
+    if (isSubmitting) {
+      return "Adding...";
+    }
+    return "Add";
+  };
 
-    setOpen(false);
-    form.reset();
-    if (setSelectedTopic) {
-      setSelectedTopic(null);
+  const onSubmit = async (values: z.infer<typeof topicSchema>) => {
+    try {
+      setIsSubmitting(true);
+      console.log(values);
+
+      if (selectedTopic) {
+        const response = await updateTopic(selectedTopic.id, {
+          title: values.title,
+          content: values.content,
+        });
+
+        if (response.success) {
+          toast.success("Topic updated successfully!");
+          setTopics((prev) =>
+            prev.map((topic) =>
+              topic.id === selectedTopic.id
+                ? { id: topic.id, ...values }
+                : topic
+            )
+          );
+        } else throw new Error("Failed to update topic");
+      } else {
+        const response = await addTopic({
+          title: values.title,
+          content: values.content,
+          gistId,
+        });
+
+        if (response.success) {
+          toast.success("Topic added successfully!");
+          setTopics((prev) => [...prev, { id: uuidv4(), ...values }]);
+        } else throw new Error("Failed to add topic");
+      }
+
+      setOpen(false);
+      form.reset();
+      if (setSelectedTopic) {
+        setSelectedTopic(null);
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to add topic");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -135,7 +181,7 @@ export const CreateTopicDialog = ({
               />
             </Stack>
             <Button type="submit" className="mt-5">
-              {selectedTopic ? "Update" : "Add"}
+              {getButtonText()}
             </Button>
           </form>
         </Form>

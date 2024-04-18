@@ -9,6 +9,9 @@ export async function GET(
     where: {
       slug: params.slug,
     },
+    include: {
+      topics: true,
+    },
   });
 
   return Response.json({

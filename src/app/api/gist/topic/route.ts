@@ -18,6 +18,7 @@ export async function POST(req: Request) {
   const res = await req.json();
   const authObj: any = await auth();
 
+  console.log("res", res);
   const response = await prisma.topic.create({
     data: {
       title: res.title,
@@ -32,6 +33,7 @@ export async function POST(req: Request) {
 
   return Response.json({
     message: "Topic created successfully!",
+    success: true,
     data: response,
   });
 }

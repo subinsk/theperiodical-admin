@@ -2,6 +2,7 @@
 
 import { AppProgressBar as ProgressBar } from "next-nprogress-bar";
 import { SessionProvider } from "next-auth/react";
+import { Toaster } from "react-hot-toast";
 
 export default function RootLayout({
   children,
@@ -18,6 +19,7 @@ export default function RootLayout({
           options={{ showSpinner: false }}
           shallowRouting
         />
+        <Toaster />
       </SessionProvider>
     </>
   );

@@ -149,17 +149,19 @@ export default function EditTopicsForm({
                     done.
                   </CardDescription>
                 </Stack>
-                <Stack direction="row" align="center" gap={4}>
-                  <Button variant="outline">Save</Button>
-                  <Button onClick={() => setOpenCreateTopicDialog(true)}>
-                    Add Topic
-                  </Button>
-                  <CreateTopicDialog
-                    open={openCreateTopicDialog}
-                    setOpen={setOpenCreateTopicDialog}
-                    setTopics={setTopics}
-                  />
-                </Stack>
+                {gistDetails && (
+                  <Stack direction="row" align="center" gap={4}>
+                    <Button onClick={() => setOpenCreateTopicDialog(true)}>
+                      Add Topic
+                    </Button>
+                    <CreateTopicDialog
+                      open={openCreateTopicDialog}
+                      setOpen={setOpenCreateTopicDialog}
+                      setTopics={setTopics}
+                      gistId={gistDetails?.id}
+                    />
+                  </Stack>
+                )}
               </Stack>
             </CardHeader>
             <CardContent>
@@ -184,8 +186,7 @@ export default function EditTopicsForm({
             <CardHeader>
               <CardTitle>Preview</CardTitle>
               <CardDescription>
-                Change your password here. After saving, you&apos;ll be logged
-                out.
+                This is how your gist will look like to others.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">Preview</CardContent>

@@ -15,6 +15,7 @@ export async function GET(
 
   return Response.json({
     message: "Topic fetched successfully!",
+    success: true,
     data: response,
   });
 }
@@ -36,6 +37,7 @@ export async function PUT(
 
   return Response.json({
     message: "Topic updated successfully!",
+    success: true,
     data: response,
   });
 }
@@ -52,6 +54,7 @@ export async function DELETE(
 
   return Response.json({
     message: "Topic deleted successfully!",
+    success: true,
     data: response,
   });
 }
