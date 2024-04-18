@@ -1,102 +1,26 @@
 "use client";
 
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-  Button,
-  Label,
-  InputField,
-  Stack,
-  Typography,
-} from "@/components";
-import { CreateTopicDialog } from "@/sections/gists/create/create-topic-dialog";
-import { useState } from "react";
-import { Icon } from "@iconify/react";
-import { DeleteConfirmDialog } from "@/sections/gists/create/delete-confirm-dialog";
+import { Stack, Typography } from "@/components";
+import { useEffect, useState } from "react";
 import CreateGistForm from "@/sections/gists/create/create-gist-form";
+import { useGetGists } from "@/services/gist.service";
+import { Loader2 } from "lucide-react";
+import EditTopicsForm from "@/sections/gists/create/edit-topics-form";
 
-const TopicCard = ({
-  id,
-  title,
-  content,
-  setTopics,
+export default function CreateGistView({
+  slug,
 }: {
-  id: string;
-  title: string;
-  content: string;
-  setTopics: React.Dispatch<
-    React.SetStateAction<{ id: string; title: string; content: string }[]>
-  >;
-}) => {
-  const [openDeleteConfirmDialog, setOpenDeleteConfirmDialog] =
-    useState<boolean>(false);
-  const [openEditTopicDialog, setOpenEditTopicDialog] =
-    useState<boolean>(false);
-  const [selectedTopic, setSelectedTopic] = useState<{
-    id: string;
-    title: string;
-    content: string;
-  } | null>(null);
+  slug?: string;
+}): JSX.Element {
+  // hooks
+  const {
+    gists: data,
+    gistsLoading: isLoading,
+    gistsError: error,
+    gistsValidating: isValidating,
+    gistsEmpty: isEmpty,
+  } = useGetGists(slug);
 
-  return (
-    <Card>
-      <CardHeader>
-        <Stack direction="row" align="center" justify="between">
-          <CardTitle>{title}</CardTitle>
-          <Stack direction="row" gap={2}>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => {
-                setSelectedTopic({ id, title, content });
-                setOpenEditTopicDialog(true);
-              }}
-            >
-              <Icon icon="tabler:pencil" width={16} height={16} />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => {
-                setSelectedTopic({ id, title, content });
-                setOpenDeleteConfirmDialog(true);
-              }}
-            >
-              <Icon icon="tabler:trash" width={16} height={16} />
-            </Button>
-            <CreateTopicDialog
-              open={openEditTopicDialog}
-              selectedTopic={selectedTopic || undefined}
-              setSelectedTopic={setSelectedTopic}
-              setOpen={setOpenEditTopicDialog}
-              setTopics={setTopics}
-            />
-            <DeleteConfirmDialog
-              open={openDeleteConfirmDialog}
-              selectedTopicId={selectedTopic?.id || ""}
-              setOpen={setOpenDeleteConfirmDialog}
-              setSelectedTopic={setSelectedTopic}
-              setTopics={setTopics}
-            />
-          </Stack>
-        </Stack>
-      </CardHeader>
-      <CardContent>
-        <div dangerouslySetInnerHTML={{ __html: content }} />
-      </CardContent>
-    </Card>
-  );
-};
-
-export default function CreateGistView(): JSX.Element {
   // states
   const [topics, setTopics] = useState<
     {
@@ -105,89 +29,54 @@ export default function CreateGistView(): JSX.Element {
       content: string;
     }[]
   >([]);
-  const [openCreateTopicDialog, setOpenCreateTopicDialog] =
-    useState<boolean>(false);
+
   const [gistId, setGistId] = useState<string>("");
+  const [gistDetails, setGistDetails] = useState<{
+    id: string;
+    title: string;
+    description: string;
+    from: Date;
+    to: Date;
+  } | null>(null);
+
+  // effects
+  useEffect(() => {
+    if (data[0]) {
+      setGistId(data[0].id as string);
+      setGistDetails(data[0]);
+      setTopics((data[0]?.topics as any) || []);
+    }
+  }, [data]);
+
+  console.log("data: ", data);
+
+  if (isLoading) {
+    return (
+      <Stack align="center" justify="center" className="h-screen w-full">
+        <Stack direction="row" gap={4} align="center">
+          <Loader2 className="mr-2 h-20 w-20 animate-spin" />
+          <Typography variant="h3">Loading...</Typography>
+        </Stack>
+      </Stack>
+    );
+  }
 
   return (
     <div>
       {!gistId ? (
         <Stack gap={3}>
           <Typography variant="h3">Create Gist</Typography>
-          <CreateGistForm setGistId={setGistId} />
+          <CreateGistForm
+            setGistId={setGistId}
+            setGistDetails={setGistDetails}
+          />
         </Stack>
       ) : (
-        <Tabs defaultValue="edit">
-          <TabsList className="grid w-[400px] mx-auto grid-cols-2">
-            <TabsTrigger value="edit">Edit</TabsTrigger>
-            <TabsTrigger value="preview">Preview</TabsTrigger>
-          </TabsList>
-          <TabsContent value="edit">
-            <Card>
-              <CardHeader>
-                <Stack direction="row" align="center" justify="between">
-                  <Stack>
-                    <CardTitle>Edit</CardTitle>
-                    <CardDescription>
-                      Make changes to the gist here. Click save when you&apos;re
-                      done.
-                    </CardDescription>
-                  </Stack>
-                  <Stack direction="row" align="center">
-                    <Button variant="outline">Save</Button>
-                    <Button onClick={() => setOpenCreateTopicDialog(true)}>
-                      Add Topic
-                    </Button>
-                    <CreateTopicDialog
-                      open={openCreateTopicDialog}
-                      setOpen={setOpenCreateTopicDialog}
-                      setTopics={setTopics}
-                    />
-                  </Stack>
-                </Stack>
-              </CardHeader>
-              <CardContent>
-                <Stack gap={2}>
-                  <Typography variant="h3">Topics</Typography>
-                  {topics.length === 0 ? (
-                    <Typography variant="p" color="info">
-                      No topics added yet
-                    </Typography>
-                  ) : null}
-                  <Stack gap={2}>
-                    {topics.map((topic, index) => (
-                      <TopicCard key={index} setTopics={setTopics} {...topic} />
-                    ))}
-                  </Stack>
-                </Stack>
-              </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="preview">
-            <Card>
-              <CardHeader>
-                <CardTitle>Preview</CardTitle>
-                <CardDescription>
-                  Change your password here. After saving, you&apos;ll be logged
-                  out.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="space-y-1">
-                  <Label htmlFor="current">Current password</Label>
-                  <InputField id="current" type="password" />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="new">New password</Label>
-                  <InputField id="new" type="password" />
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button>Save password</Button>
-              </CardFooter>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        <EditTopicsForm
+          gistDetails={gistDetails}
+          topics={topics}
+          setTopics={setTopics}
+        />
       )}
     </div>
   );

@@ -29,8 +29,10 @@ import { createGist } from "@/services/gist.service";
 
 export default function CreateGistForm({
   setGistId,
+  setGistDetails,
 }: {
   setGistId: (id: string) => void;
+  setGistDetails: (details: any) => void;
 }) {
   // states
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -48,13 +50,12 @@ export default function CreateGistForm({
   });
 
   const onSubmit = async (values: z.infer<typeof gistSchema>) => {
-    console.log(values);
     setIsSubmitting(true);
-
     try {
       const response = await createGist(values);
-
       console.log("response: ", response);
+      setGistId(response.data.id);
+      setGistDetails(response.data);
     } catch (e) {
       console.log(e);
     } finally {

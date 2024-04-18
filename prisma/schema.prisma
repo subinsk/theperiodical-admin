@@ -88,13 +88,24 @@ model Authenticator {
 
 model Gist {
   id          String   @id @unique @default(uuid())
+  slug        String   @unique
   title       String
   description String?
-  content     String?
+  topics      Topic[]
   from        DateTime
   to          DateTime
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   author      User     @relation(fields: [authorId], references: [id])
   authorId    String
+}
+
+model Topic {
+  id        String   @id @unique @default(uuid())
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  gist      Gist?    @relation(fields: [gistId], references: [id])
+  gistId    String?
 }

@@ -2,6 +2,7 @@
 
 import { Button } from "@/components";
 import { paths } from "@/lib";
+import GistListTableSection from "@/sections/gists/list";
 import { Icon } from "@iconify/react";
 import Link from "next/link";
 
@@ -19,7 +20,7 @@ export default function GistsListView(): JSX.Element {
           </Link>
         </Button>
       </div>
-      <div className="flex"></div>
+      <GistListTableSection />
     </div>
   );
 }

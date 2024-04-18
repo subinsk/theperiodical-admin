@@ -22,7 +22,7 @@ export const fetcher = async (
 };
 
 export const endpoints = {
-  gist: "/api/gist",
+  gist: "/gist",
 };
 
 export { api };

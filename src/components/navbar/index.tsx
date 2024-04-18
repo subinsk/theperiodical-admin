@@ -9,6 +9,7 @@ import { BsArrowBarUp } from "react-icons/bs";
 import { IoMdNotificationsOutline } from "react-icons/io";
 import { Dropdown } from "@/components";
 import Image from "next/image";
+import { useSession } from "next-auth/react";
 // import { RiMoonFill, RiSunFill } from 'react-icons/ri';
 // import Configurator from './Configurator';
 // import { IoMdNotificationsOutline } from "react-icons/io";
@@ -20,8 +21,17 @@ export function Navbar(props: {
   secondary?: boolean | string;
   [x: string]: unknown;
 }): JSX.Element {
+  // props
   const { onOpenSidenav, brandText } = props;
+
+  // hooks
+  const session = useSession();
+
+  console.log("session: ", session);
+
+  // states
   const [darkmode, setDarkmode] = useState(false);
+
   return (
     <nav className="sticky top-4 z-40 flex flex-row flex-wrap items-center justify-between rounded-xl bg-white/10 p-2 backdrop-blur-xl dark:bg-[#0b14374d]">
       <div className="ml-[6px]">
@@ -152,13 +162,16 @@ export function Navbar(props: {
         </div>
         <Dropdown
           button={
+            session?.data?.user?.image?
             <Image
               alt="Elon Musk"
               className="h-10 w-10 rounded-full"
               height="20"
-              src="/img/avatars/avatar4.png"
+              src={session.data.user.image}
               width="2"
             />
+            :
+            <></>
           }
           classNames="py-2 top-8 -left-[180px] w-max"
         >
