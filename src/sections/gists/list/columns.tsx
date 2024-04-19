@@ -45,12 +45,18 @@ export const columns: ColumnDef<Gist>[] = [
             variant="outline"
             size="icon"
             onClick={async () => {
+              const toastId = toast.loading("Deleting...");
+
               const response = await deleteGist(props.row.original.slug);
 
               if (response.success) {
-                toast.success("Gist deleted successfully!");
+                toast.success("Gist deleted successfully!", {
+                  id: toastId,
+                });
               } else {
-                toast.error("Gist deletion failed!");
+                toast.error("Gist deletion failed!", {
+                  id: toastId,
+                });
               }
             }}
           >

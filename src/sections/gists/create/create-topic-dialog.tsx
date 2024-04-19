@@ -24,6 +24,7 @@ import { v4 as uuidv4 } from "uuid";
 import { topicSchema } from "@/schema";
 import { addTopic, updateTopic } from "@/services/topic.service";
 import toast from "react-hot-toast";
+import { Loader2 } from "lucide-react";
 
 export const CreateTopicDialog = ({
   open,
@@ -105,17 +106,16 @@ export const CreateTopicDialog = ({
           setTopics((prev) => [...prev, { id: uuidv4(), ...values }]);
         } else throw new Error("Failed to add topic");
       }
-
-      setOpen(false);
-      form.reset();
-      if (setSelectedTopic) {
-        setSelectedTopic(null);
-      }
     } catch (error) {
       console.error(error);
       toast.error("Failed to add topic");
     } finally {
       setIsSubmitting(false);
+      setOpen(false);
+      form.reset();
+      if (setSelectedTopic) {
+        setSelectedTopic(null);
+      }
     }
   };
 
@@ -181,6 +181,9 @@ export const CreateTopicDialog = ({
               />
             </Stack>
             <Button type="submit" className="mt-5">
+              {isSubmitting && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
               {getButtonText()}
             </Button>
           </form>

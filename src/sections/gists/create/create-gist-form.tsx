@@ -24,15 +24,21 @@ import { z } from "zod";
 import { format } from "date-fns";
 import { cn } from "@/lib";
 import { Icon } from "@iconify/react";
-import { useState } from "react";
-import { createGist } from "@/services/gist.service";
+import { useEffect, useState } from "react";
+import { createGist, updateGist } from "@/services/gist.service";
 
 export default function CreateGistForm({
   setGistId,
   setGistDetails,
+  selectedGist,
+  setSelectedGist,
+  setOpenEditGistDialog,
 }: {
-  setGistId: (id: string) => void;
+  setGistId?: (id: string) => void;
   setGistDetails: (details: any) => void;
+  selectedGist?: any;
+  setSelectedGist?: any;
+  setOpenEditGistDialog?: any;
 }) {
   // states
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -48,19 +54,65 @@ export default function CreateGistForm({
     },
   });
 
+  // functions
+  const getButtonText = () => {
+    if (selectedGist) {
+      if (isSubmitting) {
+        return "Updating...";
+      }
+      return "Update";
+    }
+    if (isSubmitting) {
+      return "Creating...";
+    }
+    return "Create";
+  };
+
   const onSubmit = async (values: z.infer<typeof gistSchema>) => {
     setIsSubmitting(true);
+
     try {
-      const response = await createGist(values);
-      console.log("response: ", response);
-      setGistId(response.data.id);
-      setGistDetails(response.data);
+      if (selectedGist) {
+        const response = await updateGist(selectedGist.id, values);
+
+        if (response.success) {
+          setGistDetails(response.data);
+        } else {
+          throw new Error("Failed to update the gist");
+        }
+      } else {
+        const response = await createGist(values);
+
+        if (response.success) {
+          if (setGistId) {
+            setGistId(response.data.id);
+          }
+          setGistDetails(response.data);
+        } else throw new Error("Failed to create the gist");
+      }
     } catch (e) {
       console.log(e);
     } finally {
       setIsSubmitting(false);
+      form.reset();
+      if (setSelectedGist) {
+        setSelectedGist(null);
+      }
+      if (setOpenEditGistDialog) {
+        setOpenEditGistDialog(false);
+      }
     }
   };
+
+  // effects
+  useEffect(() => {
+    if (selectedGist) {
+      form.setValue("title", selectedGist.title);
+      form.setValue("description", selectedGist.description);
+      form.setValue("from", new Date(selectedGist.from));
+      form.setValue("to", new Date(selectedGist.to));
+    }
+  }, [form, selectedGist]);
 
   return (
     <Form {...form}>
@@ -187,7 +239,7 @@ export default function CreateGistForm({
               {isSubmitting && (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
-              {isSubmitting ? "Creating Gist..." : "Create Gist"}
+              {getButtonText()}
             </Button>
           </div>
         </div>

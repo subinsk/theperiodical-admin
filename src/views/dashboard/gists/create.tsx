@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import CreateGistForm from "@/sections/gists/create/create-gist-form";
 import { useGetGists } from "@/services/gist.service";
 import { Loader2 } from "lucide-react";
-import EditTopicsForm from "@/sections/gists/create/edit-topics-form";
+import EditTopicsForm from "@/sections/gists/edit/edit-topics-form";
 
 export default function CreateGistView({
   slug,
@@ -50,7 +50,7 @@ export default function CreateGistView({
 
   if (isLoading) {
     return (
-      <Stack align="center" justify="center" className="h-screen w-full">
+      <Stack align="center" justify="center" className="h-[70vh] w-full">
         <Stack direction="row" gap={4} align="center">
           <Loader2 className="mr-2 h-10 w-10 animate-spin" />
           <Typography variant="h4">Loading...</Typography>
@@ -74,6 +74,7 @@ export default function CreateGistView({
           gistDetails={gistDetails}
           topics={topics}
           setTopics={setTopics}
+          setGistDetails={setGistDetails}
         />
       )}
     </div>

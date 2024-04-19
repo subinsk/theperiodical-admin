@@ -16,6 +16,7 @@ export async function GET(
 
   return Response.json({
     message: "Gist fetched successfully!",
+    success: true,
     gists: [response],
   });
 }

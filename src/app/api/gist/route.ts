@@ -11,6 +11,7 @@ export async function GET() {
 
   return Response.json({
     message: "Gists fetched successfully!",
+    success: true,
     gists: response,
   });
 }
@@ -36,6 +37,7 @@ export async function POST(req: Request) {
 
   return Response.json({
     message: "Gist created successfully!",
+    success: true,
     data: response,
   });
 }

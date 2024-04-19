@@ -18,12 +18,14 @@ import { CreateTopicDialog } from "@/sections/gists/create/create-topic-dialog";
 import { useState } from "react";
 import { Icon } from "@iconify/react";
 import { DeleteConfirmDialog } from "@/sections/gists/create/delete-confirm-dialog";
+import EditGistDialog from "./edit-gist-dialog";
 
 const TopicCard = ({
   id,
   title,
   content,
   setTopics,
+  gistId,
 }: {
   id: string;
   title: string;
@@ -31,6 +33,7 @@ const TopicCard = ({
   setTopics: React.Dispatch<
     React.SetStateAction<{ id: string; title: string; content: string }[]>
   >;
+  gistId: string;
 }) => {
   const [openDeleteConfirmDialog, setOpenDeleteConfirmDialog] =
     useState<boolean>(false);
@@ -74,6 +77,7 @@ const TopicCard = ({
               setSelectedTopic={setSelectedTopic}
               setOpen={setOpenEditTopicDialog}
               setTopics={setTopics}
+              gistId={gistId}
             />
             <DeleteConfirmDialog
               open={openDeleteConfirmDialog}
@@ -96,6 +100,7 @@ export default function EditTopicsForm({
   gistDetails,
   topics,
   setTopics,
+  setGistDetails,
 }: {
   gistDetails: {
     id: string;
@@ -112,9 +117,21 @@ export default function EditTopicsForm({
   setTopics: React.Dispatch<
     React.SetStateAction<{ id: string; title: string; content: string }[]>
   >;
+  setGistDetails: React.Dispatch<
+    React.SetStateAction<{
+      id: string;
+      title: string;
+      description: string;
+      from: Date;
+      to: Date;
+    } | null>
+  >;
 }): JSX.Element {
+  // states
   const [openCreateTopicDialog, setOpenCreateTopicDialog] =
     useState<boolean>(false);
+
+  const [openEditGistDialog, setOpenEditGistDialog] = useState<boolean>(false);
 
   return (
     <Stack gap={3}>
@@ -126,9 +143,23 @@ export default function EditTopicsForm({
               <CardDescription>{gistDetails?.description}</CardDescription>
             </Stack>
             <Stack direction="row" align="center" gap={4}>
-              <Button variant="outline" size="icon">
+              <Button
+                onClick={() => {
+                  setOpenEditGistDialog(true);
+                }}
+                variant="outline"
+                size="icon"
+              >
                 <Icon icon="tabler:pencil" width={16} height={16} />
               </Button>
+              <EditGistDialog
+                open={openEditGistDialog}
+                selectedGist={gistDetails}
+                setSelectedGist={setGistDetails}
+                setOpen={setOpenEditGistDialog}
+                setGistDetails={setGistDetails}
+                setOpenEditGistDialog={setOpenEditGistDialog}
+              />
             </Stack>
           </Stack>
         </CardHeader>
@@ -172,11 +203,18 @@ export default function EditTopicsForm({
                     No topics added yet
                   </Typography>
                 ) : null}
-                <Stack gap={2}>
-                  {topics.map((topic, index) => (
-                    <TopicCard key={index} setTopics={setTopics} {...topic} />
-                  ))}
-                </Stack>
+                {gistDetails && (
+                  <Stack gap={2}>
+                    {topics.map((topic, index) => (
+                      <TopicCard
+                        key={index}
+                        setTopics={setTopics}
+                        gistId={gistDetails?.id}
+                        {...topic}
+                      />
+                    ))}
+                  </Stack>
+                )}
               </Stack>
             </CardContent>
           </Card>
