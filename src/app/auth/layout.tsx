@@ -9,7 +9,7 @@ export default function Layout({
     <div className="relative flex h-screen max-h-screen">
       <div className="mx-auto flex min-h-full w-full flex-col justify-start pt-12 md:max-w-[75%] lg:max-w-[1013px] lg:px-8 lg:pt-0 xl:max-w-[1383px] xl:px-0 xl:pl-[70px]">
         <div className="mb-auto flex flex-col pl-5 pr-5 md:pl-12 md:pr-0 lg:max-w-[48%] lg:pl-0 xl:max-w-full">
-          <NavLink className="mt-0 w-max lg:pt-10" href="/admin">
+          {/* <NavLink className="mt-0 w-max lg:pt-10" href="/admin">
             <div className="mx-auto flex h-fit w-fit items-center hover:cursor-pointer">
               <svg
                 fill="none"
@@ -25,7 +25,7 @@ export default function Layout({
               </svg>
               <p className="ml-3 text-sm text-gray-600">Back to Dashboard</p>
             </div>
-          </NavLink>
+          </NavLink> */}
           <div>
             <div className="relative float-right w-full dark:!bg-navy-900">
               <main className="mx-auto">{children}</main>

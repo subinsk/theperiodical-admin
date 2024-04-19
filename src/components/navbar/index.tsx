@@ -9,7 +9,7 @@ import { BsArrowBarUp } from "react-icons/bs";
 import { IoMdNotificationsOutline } from "react-icons/io";
 import { Dropdown } from "@/components";
 import Image from "next/image";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 // import { RiMoonFill, RiSunFill } from 'react-icons/ri';
 // import Configurator from './Configurator';
 // import { IoMdNotificationsOutline } from "react-icons/io";
@@ -26,8 +26,6 @@ export function Navbar(props: {
 
   // hooks
   const session = useSession();
-
-  console.log("session: ", session);
 
   // states
   const [darkmode, setDarkmode] = useState(false);
@@ -176,7 +174,7 @@ export function Navbar(props: {
           }
           classNames="py-2 top-8 -left-[180px] w-max"
         >
-          <div className="flex h-48 w-56 flex-col justify-start rounded-[20px] bg-white bg-cover bg-no-repeat shadow-xl shadow-shadow-500 dark:!bg-navy-700 dark:text-white dark:shadow-none">
+          <div className="flex h-32 w-56 flex-col justify-start rounded-[20px] bg-white bg-cover bg-no-repeat shadow-xl shadow-shadow-500 dark:!bg-navy-700 dark:text-white dark:shadow-none">
             <div className="ml-4 mt-3">
               <div className="flex items-center gap-2">
                 <p className="text-sm font-bold text-navy-700 dark:text-white">
@@ -187,7 +185,7 @@ export function Navbar(props: {
             <div className="mt-3 h-px w-full bg-gray-200 dark:bg-white/20 " />
 
             <div className="ml-4 mt-3 flex flex-col">
-              <a
+              {/* <a
                 className="text-sm text-gray-800 dark:text-white hover:dark:text-white"
                 href=" "
               >
@@ -198,10 +196,12 @@ export function Navbar(props: {
                 href=" "
               >
                 Newsletter Settings
-              </a>
+              </a> */}
               <a
-                className="mt-3 text-sm font-medium text-red-500 hover:text-red-500"
-                href=" "
+                className="cursor-pointer mt-3 text-sm font-medium text-red-500 hover:text-red-500"
+                onClick={() => {
+                  signOut();
+                }}
               >
                 Log Out
               </a>

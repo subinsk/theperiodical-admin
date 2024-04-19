@@ -38,7 +38,7 @@ export default function LoginView(): JSX.Element {
             Sign In
           </h3>
           <p className="mb-9 ml-1 text-base text-gray-600">
-            Enter your email and password to sign in!
+            Sign In with Google or GitHub
           </p>
           <div className="flex flex-col gap-2">
             <button
@@ -66,13 +66,12 @@ export default function LoginView(): JSX.Element {
               </p>
             </button>
           </div>
-          <div className="mb-6 flex items-center  gap-3">
+          {/* <div className="mb-6 flex items-center  gap-3">
             <div className="h-px w-full bg-gray-200 dark:!bg-navy-700" />
             <p className="text-base text-gray-600"> or </p>
             <div className="h-px w-full bg-gray-200 dark:!bg-navy-700" />
-          </div>
-          {/* Email */}
-          <InputField
+          </div> */}
+          {/* <InputField
             extra="mb-3"
             id="email"
             label="Email*"
@@ -85,7 +84,6 @@ export default function LoginView(): JSX.Element {
             variant="auth"
           />
 
-          {/* Password */}
           <InputField
             extra="mb-3"
             id="password"
@@ -99,7 +97,6 @@ export default function LoginView(): JSX.Element {
             variant="auth"
           />
 
-          {/* Checkbox */}
           <div className="mb-4 flex items-center justify-between px-2">
             <div className="mt-2 flex items-center">
               <Checkbox />
@@ -119,7 +116,7 @@ export default function LoginView(): JSX.Element {
             type="submit"
           >
             Sign In
-          </button>
+          </button> */}
         </div>
       </div>
     </form>

@@ -2,6 +2,7 @@
 
 import { Button } from "@/components";
 import { paths } from "@/lib";
+import { endpoints } from "@/lib/axios";
 import { deleteGist } from "@/services/gist.service";
 import { fDate } from "@/utils/format-time";
 import { Icon } from "@iconify/react";
@@ -9,6 +10,7 @@ import { Gist } from "@prisma/client";
 import { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import toast from "react-hot-toast";
+import { mutate } from "swr";
 
 export const columns: ColumnDef<Gist>[] = [
   {
@@ -19,15 +21,17 @@ export const columns: ColumnDef<Gist>[] = [
     accessorKey: "from",
     header: "From",
     cell(props: any) {
-      return <div>{fDate(props.row.original.from)}</div>;
+      return (
+        <div className="text-nowrap">{fDate(props.row.original.from)}</div>
+      );
     },
-    size: 200,
+    minSize: 200,
   },
   {
     accessorKey: "to",
     header: "To",
     cell(props: any) {
-      return <div>{fDate(props.row.original.to)}</div>;
+      return <div className="text-nowrap">{fDate(props.row.original.to)}</div>;
     },
   },
   {
@@ -50,6 +54,7 @@ export const columns: ColumnDef<Gist>[] = [
               const response = await deleteGist(props.row.original.slug);
 
               if (response.success) {
+                mutate(endpoints.gist);
                 toast.success("Gist deleted successfully!", {
                   id: toastId,
                 });

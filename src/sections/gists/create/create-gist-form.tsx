@@ -73,9 +73,10 @@ export default function CreateGistForm({
 
     try {
       if (selectedGist) {
-        const response = await updateGist(selectedGist.id, values);
+        const response = await updateGist(selectedGist.slug, values);
 
         if (response.success) {
+          console.log(response.data);
           setGistDetails(response.data);
         } else {
           throw new Error("Failed to update the gist");

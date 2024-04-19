@@ -132,6 +132,7 @@ export default function EditTopicsForm({
     useState<boolean>(false);
 
   const [openEditGistDialog, setOpenEditGistDialog] = useState<boolean>(false);
+  const [selectedGist, setSelectedGist] = useState<any>(null);
 
   return (
     <Stack gap={3}>
@@ -145,6 +146,7 @@ export default function EditTopicsForm({
             <Stack direction="row" align="center" gap={4}>
               <Button
                 onClick={() => {
+                  setSelectedGist(gistDetails);
                   setOpenEditGistDialog(true);
                 }}
                 variant="outline"
@@ -154,8 +156,8 @@ export default function EditTopicsForm({
               </Button>
               <EditGistDialog
                 open={openEditGistDialog}
-                selectedGist={gistDetails}
-                setSelectedGist={setGistDetails}
+                selectedGist={selectedGist}
+                setSelectedGist={setSelectedGist}
                 setOpen={setOpenEditGistDialog}
                 setGistDetails={setGistDetails}
                 setOpenEditGistDialog={setOpenEditGistDialog}
@@ -227,7 +229,16 @@ export default function EditTopicsForm({
                 This is how your gist will look like to others.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2">Preview</CardContent>
+            <CardContent className="space-y-2">
+              <Stack gap={2}>
+                {topics.map((topic, index) => (
+                  <Stack key={index}>
+                    <div className="font-bold text-xl">{topic.title}</div>
+                    <div dangerouslySetInnerHTML={{ __html: topic.content }} />
+                  </Stack>
+                ))}
+              </Stack>
+            </CardContent>
           </Card>
         </TabsContent>
       </Tabs>

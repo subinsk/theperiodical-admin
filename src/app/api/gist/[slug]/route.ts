@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib";
+import { slugify } from "@/utils";
 
 export async function GET(
   req: Request,
@@ -34,6 +35,7 @@ export async function PUT(
     },
     data: {
       title: res.title,
+      slug: slugify(res.title),
       description: res.description,
       from: res.from,
       to: res.to,

@@ -5,10 +5,13 @@ import useSWR from "swr";
 export function useGetGists(slug?: string) {
   const URL = slug ? `${endpoints.gist}/${slug}` : endpoints.gist;
 
-  const { data, isLoading, error, isValidating } = useSWR(URL, async (url) => {
-    const res = await api.get(url);
-    return res.data;
-  });
+  const { data, isLoading, error, isValidating, mutate } = useSWR(
+    URL,
+    async (url) => {
+      const res = await api.get(url);
+      return res.data;
+    }
+  );
 
   const memoizedValue = useMemo(
     () => ({
@@ -17,8 +20,9 @@ export function useGetGists(slug?: string) {
       gistsError: error,
       gistsValidating: isValidating,
       gistsEmpty: !isLoading && !data?.gists.length,
+      refetch: mutate,
     }),
-    [data?.gists, error, isLoading, isValidating]
+    [data?.gists, error, isLoading, isValidating, mutate]
   );
 
   return memoizedValue;
