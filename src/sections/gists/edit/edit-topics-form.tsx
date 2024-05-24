@@ -234,19 +234,18 @@ export default function EditTopicsForm({
                   </CardDescription>
                 </Stack>
                 {gistDetails && (
-                <Stack direction="row" align="center" gap={4}>
-                  <Button onClick={() => setOpenCreateTopicDialog(true)}>
-                    Add Topic
-                  </Button>
-                  <CreateTopicDialog
-                    open={openCreateTopicDialog}
-                    setOpen={setOpenCreateTopicDialog}
-                    setTopics={setTopics}
-                    gistId={gistDetails?.id}
-                    gistId={"1"}
-                  />
-                </Stack>
-               )}
+                  <Stack direction="row" align="center" gap={4}>
+                    <Button onClick={() => setOpenCreateTopicDialog(true)}>
+                      Add Topic
+                    </Button>
+                    <CreateTopicDialog
+                      open={openCreateTopicDialog}
+                      setOpen={setOpenCreateTopicDialog}
+                      setTopics={setTopics}
+                      gistId={gistDetails?.id}
+                    />
+                  </Stack>
+                )}
               </Stack>
             </CardHeader>
             <CardContent>

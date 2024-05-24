@@ -1,5 +1,5 @@
-import { auth } from "@/auth";
 import { prisma } from "@/lib";
+import { createClient } from "@/lib/supabase/server";
 
 export async function GET() {
   const response = await prisma.topic.findMany({
@@ -15,8 +15,13 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const supabase = createClient()
+
   const res = await req.json();
-  const authObj: any = await auth();
+
+  const { data: {
+    user
+  } }: any = await supabase.auth.getUser()
 
   const response = await prisma.topic.create({
     data: {
