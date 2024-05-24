@@ -8,8 +8,11 @@ import Link from "next/link";
 
 export default function GistsListView(): JSX.Element {
   return (
-    <div className="flex flex-col ">
-      <div className="flex w-full justify-end">
+    <div className="flex flex-col">
+      <div className="flex w-full justify-between  pl-8">
+      <p className="text-3xl font-bold">
+        Gists
+      </p>
         <Button>
           <Link
             href={paths.dashboard.gists.create}

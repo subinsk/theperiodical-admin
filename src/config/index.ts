@@ -8,3 +8,16 @@ export const AUTH_GOOGLE_ID = process.env.AUTH_GOOGLE_ID;
 export const AUTH_GOOGLE_SECRET = process.env.AUTH_GOOGLE_SECRET;
 
 export const AUTH_SECRET = process.env.AUTH_SECRET;
+
+// IMAGE_KIT
+export const IMAGE_KIT_PUBLIC_KEY =
+    process.env.NEXT_PUBLIC_IMAGE_KIT_PUBLIC_KEY;
+export const IMAGE_KIT_PRIVATE_KEY =
+    process.env.NEXT_PUBLIC_IMAGE_KIT_PRIVATE_KEY;
+export const IMAGE_KIT_URL_ENDPOINT =
+    process.env.NEXT_PUBLIC_IMAGE_KIT_URL_ENDPOINT;
+
+// SUPABASE
+export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+export const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+export const SUPABASE_SERVICE_ROLE_KEY = process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY!;

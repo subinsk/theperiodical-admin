@@ -9,11 +9,14 @@ import { BsArrowBarUp } from "react-icons/bs";
 import { IoMdNotificationsOutline } from "react-icons/io";
 import { Dropdown } from "@/components";
 import Image from "next/image";
-import { signOut, useSession } from "next-auth/react";
+import useGetUser from "@/hooks/use-get-user";
+import { signOut } from "@/lib/supabase/actions/logout";
 // import { RiMoonFill, RiSunFill } from 'react-icons/ri';
 // import Configurator from './Configurator';
 // import { IoMdNotificationsOutline } from "react-icons/io";
 // import Image from "next/image";
+import { Icon } from "@iconify/react";
+import { Loader2 } from "lucide-react";
 
 export function Navbar(props: {
   onOpenSidenav: () => void;
@@ -25,20 +28,21 @@ export function Navbar(props: {
   const { onOpenSidenav, brandText } = props;
 
   // hooks
-  const session = useSession();
+  const user = useGetUser();
 
   // states
   const [darkmode, setDarkmode] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   return (
     <nav className="sticky top-4 z-40 flex flex-row flex-wrap items-center justify-between rounded-xl bg-white/10 p-2 backdrop-blur-xl dark:bg-[#0b14374d]">
       <div className="ml-[6px]">
-        <div className="h-6 w-[224px] pt-1">
+        {/*<div className="h-6 w-[224px] pt-1">
           <a
             className="text-sm font-normal text-navy-700 hover:underline dark:text-white dark:hover:text-white"
             href=" "
           >
-            Pages
+            Dashboard
             <span className="mx-1 text-sm text-navy-700 hover:text-navy-700 dark:text-white">
               {" "}
               /{" "}
@@ -50,15 +54,15 @@ export function Navbar(props: {
           >
             {brandText}
           </NavLink>
-        </div>
-        <p className="shrink text-[33px] capitalize text-navy-700 dark:text-white">
+        </div>*/}
+        {/* <p className="shrink text-[33px] capitalize text-navy-700 dark:text-white">
           <NavLink
             className="font-bold capitalize hover:text-navy-700 dark:hover:text-white"
             href="#"
           >
             {brandText}
           </NavLink>
-        </p>
+        </p>*/}
       </div>
 
       <div className="relative mt-[3px] flex h-[61px] w-[100px] border-[0.5px] border-gray-200  flex-grow items-center justify-around gap-2 rounded-full bg-white px-2 py-2 shadow-xl shadow-shadow-500 dark:!bg-navy-800 dark:shadow-none  md:flex-grow-0 md:gap-1  xl:gap-2">
@@ -160,16 +164,19 @@ export function Navbar(props: {
         </div>
         <Dropdown
           button={
-            session?.data?.user?.image ? (
+            user?.user_metadata?.avatar_url ? (
               <Image
-                alt="Elon Musk"
+                alt={user?.user_metadata?.name}
                 className="h-10 w-10 rounded-full"
                 height="20"
-                src={session.data.user.image}
+                src={user?.user_metadata?.avatar_url}
                 width="2"
               />
             ) : (
-              <></>
+              <Icon
+                icon="radix-icons:avatar"
+                className="h-8 w-8 dark:text-white"
+              />
             )
           }
           classNames="py-2 top-8 -left-[180px] w-max"
@@ -178,7 +185,7 @@ export function Navbar(props: {
             <div className="ml-4 mt-3">
               <div className="flex items-center gap-2">
                 <p className="text-sm font-bold text-navy-700 dark:text-white">
-                  👋 Hey, {session?.data?.user?.name}
+                  👋 Hey, {user?.user_metadata?.name}
                 </p>
               </div>
             </div>
@@ -198,11 +205,15 @@ export function Navbar(props: {
                 Newsletter Settings
               </a> */}
               <a
-                className="cursor-pointer mt-3 text-sm font-medium text-red-500 hover:text-red-500"
+                className="cursor-pointer mt-3 text-sm font-medium text-red-500 hover:text-red-500 inline-flex items-center gap-2"
                 onClick={() => {
+                  setIsSigningOut(true);
                   signOut();
                 }}
               >
+                {isSigningOut && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
                 Log Out
               </a>
             </div>

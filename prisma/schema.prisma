@@ -14,76 +14,32 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
+enum Role {
+  admin
+  member
+  user
+}
+
+enum Status {
+  active
+  inactive
+}
+
 model User {
-  id            String          @id @default(uuid())
+  id            String   @id @default(uuid())
+  email         String   @unique
   name          String?
-  email         String          @unique
-  emailVerified DateTime?
+  phone         String?
   password      String?
-  role          String          @default("user")
+  emailVerified String?  @map("email_verified")
   image         String?
-  accounts      Account[]
-  sessions      Session[]
-  // Optional for WebAuthn support
-  Authenticator Authenticator[]
+  role          Role?    @default(user)
+  status        Status?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+  gists         Gist[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  Gist      Gist[]
-}
-
-model Account {
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String?
-  access_token      String?
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String?
-  session_state     String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@id([provider, providerAccountId])
-}
-
-model Session {
-  sessionToken String   @unique
-  userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model VerificationToken {
-  identifier String
-  token      String
-  expires    DateTime
-
-  @@id([identifier, token])
-}
-
-// Optional for WebAuthn support
-model Authenticator {
-  id                   String  @id @default(uuid())
-  credentialID         String  @unique
-  userId               String
-  providerAccountId    String
-  credentialPublicKey  String
-  counter              Int
-  credentialDeviceType String
-  credentialBackedUp   Boolean
-  transports           String?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@map("users")
 }
 
 model Gist {
@@ -98,6 +54,8 @@ model Gist {
   updatedAt   DateTime @updatedAt
   author      User     @relation(fields: [authorId], references: [id])
   authorId    String
+
+  @@map("gists")
 }
 
 model Topic {
@@ -108,4 +66,6 @@ model Topic {
   updatedAt DateTime @updatedAt
   gist      Gist?    @relation(fields: [gistId], references: [id])
   gistId    String?
+
+  @@map("topics")
 }

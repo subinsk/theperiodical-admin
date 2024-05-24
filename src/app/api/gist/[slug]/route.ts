@@ -1,6 +1,6 @@
-import { auth } from "@/auth";
 import { prisma } from "@/lib";
 import { slugify } from "@/utils";
+import { createClient } from "@/lib/supabase/server";
 
 export async function GET(
   req: Request,
@@ -27,7 +27,6 @@ export async function PUT(
   { params }: { params: { slug: string } }
 ) {
   const res = await req.json();
-  const authObj: any = await auth();
 
   const response = await prisma.gist.update({
     where: {

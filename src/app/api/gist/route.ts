@@ -1,6 +1,7 @@
-import { auth } from "@/auth";
 import { prisma } from "@/lib";
+import { createClient } from "@/lib/supabase/server";
 import { slugify } from "@/utils";
+
 
 export async function GET() {
   const response = await prisma.gist.findMany({
@@ -17,21 +18,26 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const supabase = createClient()
+
   const res = await req.json();
-  const authObj: any = await auth();
+
+  const { data: {
+    user
+  } }: any = await supabase.auth.getUser()
 
   const response = await prisma.gist.create({
     data: {
       title: res.title,
       slug: slugify(res.title),
       description: res.description,
-      author: {
-        connect: {
-          id: authObj.userId,
-        },
-      },
       from: res.from,
       to: res.to,
+      author: {
+        connect: {
+          id: user.id
+        }
+      }
     },
   });
 

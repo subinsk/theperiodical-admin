@@ -1,5 +1,8 @@
+"use client";
+
 import { Card, CardContent, Stack, Typography } from "@/components";
 import Link from "next/link";
+import { Icon } from "@iconify/react";
 import { IoNewspaperOutline } from "react-icons/io5";
 
 export default function Page(): JSX.Element {
@@ -8,6 +11,11 @@ export default function Page(): JSX.Element {
       title: "Gists",
       icon: <IoNewspaperOutline className="h-8 w-8" />,
       href: "/dashboard/gists",
+    },
+    {
+      title: "Settings",
+      icon: <Icon icon="tabler:settings" className="h-6 w-6" />,
+      href: "/dashboard/settings",
     },
   ];
   return (

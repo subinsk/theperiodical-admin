@@ -15,86 +15,119 @@ import {
   Typography,
 } from "@/components";
 import { CreateTopicDialog } from "@/sections/gists/create/create-topic-dialog";
-import { useState } from "react";
+import { forwardRef, useState } from "react";
 import { Icon } from "@iconify/react";
 import { DeleteConfirmDialog } from "@/sections/gists/create/delete-confirm-dialog";
 import EditGistDialog from "./edit-gist-dialog";
+import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
 
-const TopicCard = ({
-  id,
-  title,
-  content,
-  setTopics,
-  gistId,
-}: {
+type Topic = {
   id: string;
+  index: number;
   title: string;
   content: string;
   setTopics: React.Dispatch<
     React.SetStateAction<{ id: string; title: string; content: string }[]>
   >;
   gistId: string;
-}) => {
-  const [openDeleteConfirmDialog, setOpenDeleteConfirmDialog] =
-    useState<boolean>(false);
-  const [openEditTopicDialog, setOpenEditTopicDialog] =
-    useState<boolean>(false);
-  const [selectedTopic, setSelectedTopic] = useState<{
-    id: string;
-    title: string;
-    content: string;
-  } | null>(null);
-
-  return (
-    <Card>
-      <CardHeader>
-        <Stack direction="row" align="center" justify="between">
-          <CardTitle>{title}</CardTitle>
-          <Stack direction="row" gap={2}>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => {
-                setSelectedTopic({ id, title, content });
-                setOpenEditTopicDialog(true);
-              }}
-            >
-              <Icon icon="tabler:pencil" width={16} height={16} />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => {
-                setSelectedTopic({ id, title, content });
-                setOpenDeleteConfirmDialog(true);
-              }}
-            >
-              <Icon icon="tabler:trash" width={16} height={16} />
-            </Button>
-            <CreateTopicDialog
-              open={openEditTopicDialog}
-              selectedTopic={selectedTopic || undefined}
-              setSelectedTopic={setSelectedTopic}
-              setOpen={setOpenEditTopicDialog}
-              setTopics={setTopics}
-              gistId={gistId}
-            />
-            <DeleteConfirmDialog
-              open={openDeleteConfirmDialog}
-              selectedTopicId={selectedTopic?.id || ""}
-              setOpen={setOpenDeleteConfirmDialog}
-              setSelectedTopic={setSelectedTopic}
-              setTopics={setTopics}
-            />
-          </Stack>
-        </Stack>
-      </CardHeader>
-      <CardContent>
-        <div dangerouslySetInnerHTML={{ __html: content }} />
-      </CardContent>
-    </Card>
-  );
 };
+
+const TopicCard = forwardRef<HTMLDivElement, Topic>(
+  ({ id, index, title, content, setTopics, gistId, ...props }, ref) => {
+    const [openDeleteConfirmDialog, setOpenDeleteConfirmDialog] =
+      useState<boolean>(false);
+    const [openEditTopicDialog, setOpenEditTopicDialog] =
+      useState<boolean>(false);
+    const [selectedTopic, setSelectedTopic] = useState<{
+      id: string;
+      title: string;
+      content: string;
+    } | null>(null);
+
+    return (
+      <Draggable draggableId={id} index={index} key={id}>
+        {(provided, snapshot) => (
+          <div ref={provided.innerRef} {...provided.draggableProps}>
+            <Card
+              {...props}
+              className={`${snapshot.isDragging ? "shadow-lg" : ""}`}
+            >
+              <CardHeader className="px-6 py-3">
+                <Stack direction="row" align="center" justify="between">
+                  <Stack direction="row" align="center" gap={3}>
+                    <span {...provided.dragHandleProps}>
+                      <Icon
+                        className="cursor-pointer"
+                        icon="tabler:grip-vertical"
+                        width={22}
+                        height={22}
+                      />
+                    </span>
+                    <CardTitle className="text-lg">{title}</CardTitle>
+                  </Stack>
+                  <Stack direction="row" gap={2}>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="w-8 h-8"
+                      onClick={() => {
+                        setSelectedTopic({ id, title, content });
+                        setOpenEditTopicDialog(true);
+                      }}
+                    >
+                      <Icon icon="tabler:pencil" width={14} height={14} />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="w-8 h-8"
+                      onClick={() => {
+                        setSelectedTopic({ id, title, content });
+                        setOpenDeleteConfirmDialog(true);
+                      }}
+                    >
+                      <Icon icon="tabler:trash" width={14} height={14} />
+                    </Button>
+                    <CreateTopicDialog
+                      open={openEditTopicDialog}
+                      selectedTopic={selectedTopic || undefined}
+                      setSelectedTopic={setSelectedTopic}
+                      setOpen={setOpenEditTopicDialog}
+                      setTopics={setTopics}
+                      gistId={gistId}
+                    />
+                    <DeleteConfirmDialog
+                      open={openDeleteConfirmDialog}
+                      selectedTopicId={selectedTopic?.id || ""}
+                      setOpen={setOpenDeleteConfirmDialog}
+                      setSelectedTopic={setSelectedTopic}
+                      setTopics={setTopics}
+                    />
+                  </Stack>
+                </Stack>
+              </CardHeader>
+              <CardContent>
+                <div
+                  style={{
+                    display: "-webkit-box",
+                    WebkitBoxOrient: "vertical",
+                    WebkitLineClamp: 2,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                  }}
+                  className="text-sm pl-8"
+                  dangerouslySetInnerHTML={{ __html: content }}
+                />
+              </CardContent>
+            </Card>
+          </div>
+        )}
+      </Draggable>
+    );
+  }
+);
+
+TopicCard.displayName = "TopicCard";
 
 export default function EditTopicsForm({
   gistDetails,
@@ -133,6 +166,24 @@ export default function EditTopicsForm({
 
   const [openEditGistDialog, setOpenEditGistDialog] = useState<boolean>(false);
   const [selectedGist, setSelectedGist] = useState<any>(null);
+
+  // functions
+  const dragEnded = (
+    param:
+      | {
+          source: { index: number };
+          destination: { index: number };
+        }
+      | any
+  ) => {
+    const { source, destination } = param;
+    let _arr = [...topics];
+    //extracting the source item from the list
+    const _item = _arr.splice(source.index, 1)[0];
+    //inserting it at the destination index.
+    _arr.splice(destination.index, 0, _item);
+    setTopics(_arr);
+  };
 
   return (
     <Stack gap={3}>
@@ -183,18 +234,19 @@ export default function EditTopicsForm({
                   </CardDescription>
                 </Stack>
                 {gistDetails && (
-                  <Stack direction="row" align="center" gap={4}>
-                    <Button onClick={() => setOpenCreateTopicDialog(true)}>
-                      Add Topic
-                    </Button>
-                    <CreateTopicDialog
-                      open={openCreateTopicDialog}
-                      setOpen={setOpenCreateTopicDialog}
-                      setTopics={setTopics}
-                      gistId={gistDetails?.id}
-                    />
-                  </Stack>
-                )}
+                <Stack direction="row" align="center" gap={4}>
+                  <Button onClick={() => setOpenCreateTopicDialog(true)}>
+                    Add Topic
+                  </Button>
+                  <CreateTopicDialog
+                    open={openCreateTopicDialog}
+                    setOpen={setOpenCreateTopicDialog}
+                    setTopics={setTopics}
+                    gistId={gistDetails?.id}
+                    gistId={"1"}
+                  />
+                </Stack>
+               )}
               </Stack>
             </CardHeader>
             <CardContent>
@@ -206,16 +258,29 @@ export default function EditTopicsForm({
                   </Typography>
                 ) : null}
                 {gistDetails && (
-                  <Stack gap={2}>
-                    {topics.map((topic, index) => (
-                      <TopicCard
-                        key={index}
-                        setTopics={setTopics}
-                        gistId={gistDetails?.id}
-                        {...topic}
-                      />
-                    ))}
-                  </Stack>
+                  <DragDropContext onDragEnd={dragEnded}>
+                    <Droppable droppableId="topics-wrapper">
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.droppableProps}
+                        >
+                          <Stack gap={2}>
+                            {topics.map((topic, index) => (
+                              <TopicCard
+                                key={topic.id}
+                                index={index}
+                                setTopics={setTopics}
+                                gistId={gistDetails?.id}
+                                {...topic}
+                              />
+                            ))}
+                            {provided.placeholder}
+                          </Stack>
+                        </div>
+                      )}
+                    </Droppable>
+                  </DragDropContext>
                 )}
               </Stack>
             </CardContent>

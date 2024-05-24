@@ -3,10 +3,19 @@
 import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
 import { FaGithub } from "react-icons/fa";
-import { signIn } from "next-auth/react";
 import { Checkbox, InputField } from "@/components";
+import {
+  signInWithGithub,
+  signInWithGoogle,
+  signInWithEmail
+} from "@/lib/supabase/actions/login";
+import {createClient} from "@/lib/supabase/client"
+import { useRouter } from "next/navigation"
 
 export default function LoginView(): JSX.Element {
+  // hooks
+  const router = useRouter()
+  
   // states
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
@@ -20,14 +29,16 @@ export default function LoginView(): JSX.Element {
       return;
     }
 
-    await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    const supabase = createClient()
 
-    setEmail("");
-    setPassword("");
+     const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  })
+
+     if(data.user){
+      router.push('/dashboard')
+     }
   };
 
   return (
@@ -44,7 +55,7 @@ export default function LoginView(): JSX.Element {
             <button
               className=" flex h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-lightPrimary hover:cursor-pointer dark:bg-navy-800 dark:text-white"
               type="button"
-              onClick={() => signIn("google")}
+              onClick={() => signInWithGoogle()}
             >
               <div className="rounded-full text-xl">
                 <FcGoogle />
@@ -56,7 +67,7 @@ export default function LoginView(): JSX.Element {
             <button
               className=" flex h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-lightPrimary hover:cursor-pointer dark:bg-navy-800 dark:text-white"
               type="button"
-              onClick={() => signIn("github")}
+              onClick={() => signInWithGithub()}
             >
               <div className="rounded-full text-xl">
                 <FaGithub />
@@ -66,12 +77,12 @@ export default function LoginView(): JSX.Element {
               </p>
             </button>
           </div>
-          {/* <div className="mb-6 flex items-center  gap-3">
+          <div className="mb-6 flex items-center  gap-3">
             <div className="h-px w-full bg-gray-200 dark:!bg-navy-700" />
             <p className="text-base text-gray-600"> or </p>
             <div className="h-px w-full bg-gray-200 dark:!bg-navy-700" />
-          </div> */}
-          {/* <InputField
+          </div>
+          <InputField
             extra="mb-3"
             id="email"
             label="Email*"
@@ -116,7 +127,7 @@ export default function LoginView(): JSX.Element {
             type="submit"
           >
             Sign In
-          </button> */}
+          </button>
         </div>
       </div>
     </form>
