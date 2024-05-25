@@ -8,6 +8,7 @@ export const AUTH_GOOGLE_ID = process.env.AUTH_GOOGLE_ID;
 export const AUTH_GOOGLE_SECRET = process.env.AUTH_GOOGLE_SECRET;
 
 export const AUTH_SECRET = process.env.AUTH_SECRET;
+export const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
 // IMAGE_KIT
 export const IMAGE_KIT_PUBLIC_KEY =
