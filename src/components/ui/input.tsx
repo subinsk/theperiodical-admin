@@ -1,4 +1,8 @@
+"use client";
+
 import { cn } from "@/lib";
+import { useState } from "react";
+import { IoEyeOutline , IoEyeOffOutline  } from "react-icons/io5";
 
 export function InputField({
   id,
@@ -10,6 +14,7 @@ export function InputField({
   type,
   variant,
   value,
+  isPassword,
   onChange,
   ...props
 }: {
@@ -22,9 +27,12 @@ export function InputField({
   type?: string;
   value?: string;
   variant?: string;
+  isPassword?: boolean;
   onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
   props?: any;
 }): JSX.Element {
+  const [showPassword, setShowPassword] = useState(false);
+
   const inputClassName = cn(
     "mt-2 flex h-12 w-full items-center justify-center border rounded-xl bg-white/0 p-3 text-sm outline-none",
     disabled &&
@@ -39,12 +47,12 @@ export function InputField({
   );
 
   return (
-    <div className={`${extra}`}>
+    <div className={`relative ${extra}`}>
       {label && (
         <label
           className={cn(
             "text-sm text-navy-700 dark:text-white",
-            variant === "auth" ? "ml-1.5 font-medium" : "ml-3 font-bold"
+            variant === "auth" ? "ml-1.5 font-medium" : "ml-3 font-bold",
           )}
           htmlFor={id}
         >
@@ -57,10 +65,19 @@ export function InputField({
         id={id}
         onChange={onChange}
         placeholder={placeholder}
-        type={type}
+        type={isPassword ? isPassword && !showPassword ? 'password' : 'text': type}
         value={value}
         {...props}
       />
+      {isPassword && (
+        <button
+          type="button"
+          className="absolute right-3 top-[55%]"
+          onClick={() => setShowPassword(!showPassword)}
+        >
+          {showPassword ? <IoEyeOutline size={24}/>: <IoEyeOffOutline  size={24}/>} {/* Replace with actual icons */}
+        </button>
+      )}
     </div>
   );
 }

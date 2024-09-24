@@ -29,6 +29,7 @@ export function Navbar(props: {
 
   // hooks
   const user = useGetUser();
+  console.log(user);
 
   // states
   const [darkmode, setDarkmode] = useState(false);
@@ -185,7 +186,7 @@ export function Navbar(props: {
             <div className="ml-4 mt-3">
               <div className="flex items-center gap-2">
                 <p className="text-sm font-bold text-navy-700 dark:text-white">
-                  👋 Hey, {user?.user_metadata?.name}
+                  👋 Hey, {user?.user_metadata?.name || user?.email.split('@')[0]}
                 </p>
               </div>
             </div>

@@ -49,7 +49,7 @@ export default function LoginView(): JSX.Element {
             Sign In
           </h3>
           <p className="mb-9 ml-1 text-base text-gray-600">
-            Sign In with Google or GitHub
+            Sign In with Google or Email
           </p>
           <div className="flex flex-col gap-2">
             <button
@@ -64,7 +64,7 @@ export default function LoginView(): JSX.Element {
                 Sign In with Google
               </p>
             </button>
-            <button
+            {/* <button
               className=" flex h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-lightPrimary hover:cursor-pointer dark:bg-navy-800 dark:text-white"
               type="button"
               onClick={() => signInWithGithub()}
@@ -75,9 +75,9 @@ export default function LoginView(): JSX.Element {
               <p className="text-sm font-medium text-navy-700 dark:text-white">
                 Sign In with Github
               </p>
-            </button>
+            </button> */}
           </div>
-          <div className="mb-6 flex items-center  gap-3">
+          <div className="my-6 flex items-center gap-3">
             <div className="h-px w-full bg-gray-200 dark:!bg-navy-700" />
             <p className="text-base text-gray-600"> or </p>
             <div className="h-px w-full bg-gray-200 dark:!bg-navy-700" />
@@ -89,7 +89,7 @@ export default function LoginView(): JSX.Element {
             onChange={(e) => {
               setEmail(e.target.value);
             }}
-            placeholder="mail@simmmple.com"
+            placeholder="mail@domain.com"
             type="text"
             value={email}
             variant="auth"
@@ -102,13 +102,14 @@ export default function LoginView(): JSX.Element {
             onChange={(e) => {
               setPassword(e.target.value);
             }}
-            placeholder="Min. 8 characters"
+            placeholder="********"
             type="password"
             value={password}
+            isPassword
             variant="auth"
           />
 
-          <div className="mb-4 flex items-center justify-between px-2">
+          {/* <div className="mb-4 flex items-center justify-between px-2">
             <div className="mt-2 flex items-center">
               <Checkbox />
               <p className="ml-2 text-sm font-medium text-navy-700 dark:text-white">
@@ -121,7 +122,7 @@ export default function LoginView(): JSX.Element {
             >
               Forgot Password?
             </a>
-          </div>
+          </div> */}
           <button
             className="linear w-full rounded-xl bg-brand-500 py-3 text-base font-medium text-white transition duration-200 hover:bg-brand-600 active:bg-brand-700 dark:bg-brand-400 dark:text-white dark:hover:bg-brand-300 dark:active:bg-brand-200"
             type="submit"
