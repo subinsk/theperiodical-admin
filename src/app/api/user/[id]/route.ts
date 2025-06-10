@@ -1,4 +1,4 @@
-import { prisma } from "@/lib";
+import { prisma } from "@/lib/prisma-client";
 import sendResponse from "@/lib/response";
 
 export async function GET(request: Request,

@@ -1,5 +1,7 @@
-import { prisma } from "@/lib";
-import { createClient } from "@/lib/supabase/server";
+import { getServerSession } from "next-auth/next"
+import { authOptions } from "@/lib/auth"
+import { prisma } from "@/lib/prisma-client"
+import { NextRequest } from "next/server"
 
 export async function GET() {
   const response = await prisma.topic.findMany({
@@ -14,30 +16,115 @@ export async function GET() {
   });
 }
 
-export async function POST(req: Request) {
-  const supabase = createClient()
+export async function POST(req: NextRequest) {
+  try {
+    // Get session from NextAuth
+    const session = await getServerSession(authOptions)
 
-  const res = await req.json();
+    // Check if user is authenticated
+    if (!session || !session.user) {
+      return Response.json(
+        {
+          message: "Unauthorized - Please sign in",
+          success: false
+        },
+        { status: 401 }
+      )
+    }
 
-  const { data: {
-    user
-  } }: any = await supabase.auth.getUser()
+    // Get request body
+    const res = await req.json()
 
-  const response = await prisma.topic.create({
-    data: {
-      title: res.title,
-      content: res.content,
-      gist: {
-        connect: {
-          id: res.gistId,
+    // Validate required fields
+    if (!res.title || !res.content || !res.gistId) {
+      return Response.json(
+        {
+          message: "Missing required fields: title, content, gistId",
+          success: false
+        },
+        { status: 400 }
+      )
+    }
+
+    // Get user from database
+    const user = await prisma.user.findUnique({
+      where: {
+        email: session.user.email!
+      }
+    })
+
+    if (!user) {
+      return Response.json(
+        {
+          message: "User not found in database",
+          success: false
+        },
+        { status: 404 }
+      )
+    }
+
+    // Verify that the gist exists and belongs to the user
+    const gist = await prisma.gist.findFirst({
+      where: {
+        id: res.gistId,
+        authorId: user.id
+      }
+    })
+
+    if (!gist) {
+      return Response.json(
+        {
+          message: "Gist not found or you don't have permission to add topics to it",
+          success: false
+        },
+        { status: 403 }
+      )
+    }
+
+    // Create the topic
+    const response = await prisma.topic.create({
+      data: {
+        title: res.title,
+        content: res.content,
+        gist: {
+          connect: {
+            id: res.gistId,
+          },
         },
       },
-    },
-  });
+      include: {
+        gist: {
+          select: {
+            id: true,
+            title: true,
+            author: {
+              select: {
+                id: true,
+                name: true,
+                email: true
+              }
+            }
+          }
+        }
+      }
+    })
 
-  return Response.json({
-    message: "Topic created successfully!",
-    success: true,
-    data: response,
-  });
+    return Response.json({
+      message: "Topic created successfully!",
+      success: true,
+      data: response,
+    })
+
+  } catch (error) {
+    console.error('Error creating topic:', error)
+
+    return Response.json(
+      {
+        message: "Internal server error",
+        success: false,
+        error: process.env.NODE_ENV === 'development' ? error : undefined
+      },
+      { status: 500 }
+    )
+  }
 }
