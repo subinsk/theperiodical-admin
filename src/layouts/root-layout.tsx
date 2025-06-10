@@ -1,13 +1,15 @@
-"use client";
+// layouts/root-layout.tsx
+"use client"
 
-import { AppProgressBar as ProgressBar } from "next-nprogress-bar";
-import { Toaster } from "react-hot-toast";
+import { AppProgressBar as ProgressBar } from "next-nprogress-bar"
+import { Toaster } from "react-hot-toast"
+import type { ReactNode } from "react"
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+interface RootLayoutProps {
+  children: ReactNode
+}
+
+export default function RootLayout({ children }: RootLayoutProps): JSX.Element {
   return (
     <>
       {children}
@@ -19,5 +21,5 @@ export default function RootLayout({
       />
       <Toaster />
     </>
-  );
+  )
 }

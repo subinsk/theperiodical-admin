@@ -137,9 +137,9 @@ export const CreateTopicDialog = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle>Add a Topic</DialogTitle>
+          <DialogTitle>{selectedTopic ? "Edit Topic" : "Add a Topic"}</DialogTitle>
           <DialogDescription>
-            This will add a new topic to the list of topics of the gist.
+            {selectedTopic ? "This will edit this topic" : "This will add a new topic to the list of topics of the gist."}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>

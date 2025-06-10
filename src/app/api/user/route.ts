@@ -1,16 +1,16 @@
-import { prisma } from "@/lib";
+import { prisma } from "@/lib/prisma-client";
 import sendResponse from "@/lib/response";
 
 export async function GET() {
     const response = await prisma.user.findMany({
-        where:{
-            OR:[
-            {
-                role:"member"
-            },
-            {
-                role:"admin"
-            }
+        where: {
+            OR: [
+                {
+                    role: "member"
+                },
+                {
+                    role: "admin"
+                }
             ]
         }
     });

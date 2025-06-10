@@ -19,7 +19,7 @@ export function useGetGists(slug?: string) {
       gistsLoading: isLoading,
       gistsError: error,
       gistsValidating: isValidating,
-      gistsEmpty: !isLoading && !data?.gists.length,
+      gistsEmpty: !isLoading && (data?.gists ? data?.gists.length : 0),
       refetch: mutate,
     }),
     [data?.gists, error, isLoading, isValidating, mutate]

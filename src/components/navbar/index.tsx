@@ -9,8 +9,8 @@ import { BsArrowBarUp } from "react-icons/bs";
 import { IoMdNotificationsOutline } from "react-icons/io";
 import { Dropdown } from "@/components";
 import Image from "next/image";
-import useGetUser from "@/hooks/use-get-user";
-import { signOut } from "@/lib/supabase/actions/logout";
+import { useSession } from "next-auth/react"
+import { signOut } from "next-auth/react";
 // import { RiMoonFill, RiSunFill } from 'react-icons/ri';
 // import Configurator from './Configurator';
 // import { IoMdNotificationsOutline } from "react-icons/io";
@@ -28,8 +28,8 @@ export function Navbar(props: {
   const { onOpenSidenav, brandText } = props;
 
   // hooks
-  const user = useGetUser();
-  console.log(user);
+  const { data: session, status } = useSession()
+
 
   // states
   const [darkmode, setDarkmode] = useState(false);
@@ -165,12 +165,12 @@ export function Navbar(props: {
         </div>
         <Dropdown
           button={
-            user?.user_metadata?.avatar_url ? (
+            session?.user.image ? (
               <Image
-                alt={user?.user_metadata?.name}
+                alt={session?.user.name || "User Avatar"}
                 className="h-10 w-10 rounded-full"
                 height="20"
-                src={user?.user_metadata?.avatar_url}
+                src={session?.user.image}
                 width="2"
               />
             ) : (
@@ -186,7 +186,7 @@ export function Navbar(props: {
             <div className="ml-4 mt-3">
               <div className="flex items-center gap-2">
                 <p className="text-sm font-bold text-navy-700 dark:text-white">
-                  👋 Hey, {user?.user_metadata?.name || user?.email.split('@')[0]}
+                  👋 Hey, {session?.user.name || session?.user.email.split('@')[0]}
                 </p>
               </div>
             </div>
@@ -207,9 +207,9 @@ export function Navbar(props: {
               </a> */}
               <a
                 className="cursor-pointer mt-3 text-sm font-medium text-red-500 hover:text-red-500 inline-flex items-center gap-2"
-                onClick={() => {
+                onClick={async () => {
                   setIsSigningOut(true);
-                  signOut();
+                  await signOut({ callbackUrl: "/auth/login" });
                 }}
               >
                 {isSigningOut && (
