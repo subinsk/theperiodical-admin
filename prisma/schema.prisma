@@ -1,9 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,9 +11,10 @@ datasource db {
 }
 
 enum Role {
-  admin
-  member
-  user
+  super_admin // Platform level - can manage everything
+  org_admin // Organization level - can manage the entire organization
+  manager // Can manage content writers within the organization
+  content_writer // Can only create/edit gists
 }
 
 enum Status {
@@ -24,52 +22,91 @@ enum Status {
   inactive
 }
 
+model Organization {
+  id          String  @id @default(uuid())
+  name        String  @unique
+  slug        String  @unique
+  description String?
+  logo        String?
+  status      Status  @default(active)
+
+  // Billing/subscription info (optional for future)
+  plan_type   String? @default("free") // free, premium, enterprise
+  max_writers Int?    @default(5) // limit on content writers
+
+  created_at DateTime @default(now()) @map("created_at")
+  updated_at DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  users       User[]
+  gists       Gist[]
+  invitations Invitation[]
+
+  @@map("organizations")
+}
+
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  name          String?
-  phone         String?
-  password      String?
-  emailVerified DateTime? @map("email_verified")
-  image         String?
-  role          Role?     @default(user)
-  status        Status?
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
-  gists         Gist[]
-  accounts      Account[]
-  sessions      Session[]
+  id             String    @id @default(uuid())
+  email          String    @unique
+  name           String?
+  phone          String?
+  password       String?
+  email_verified DateTime? @map("email_verified")
+  image          String?
+
+  // Role and organization
+  role            Role          @default(content_writer)
+  status          Status        @default(active)
+  organization_id String?       @map("organization_id")
+  organization    Organization? @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+
+  // Invitation system
+  invited_by String?   @map("invited_by") // User ID who invited this user
+  invited_at DateTime? @map("invited_at")
+
+  created_at DateTime @default(now()) @map("created_at")
+  updated_at DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  gists       Gist[]
+  accounts    Account[]
+  sessions    Session[]
+  invitations Invitation[]
+
+  // Self-referential relation for invitation tracking
+  inviter       User?  @relation("UserInvitations", fields: [invited_by], references: [id])
+  invited_users User[] @relation("UserInvitations")
 
   @@map("users")
 }
 
 // NextAuth required models
 model Account {
-  id                String  @id @default(uuid())
-  userId            String  @map("user_id")
-  type              String
-  provider          String
-  providerAccountId String  @map("provider_account_id")
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String? @db.Text
-  session_state     String?
+  id                  String  @id @default(uuid())
+  user_id             String  @map("user_id")
+  type                String
+  provider            String
+  provider_account_id String  @map("provider_account_id")
+  refresh_token       String? @db.Text
+  access_token        String? @db.Text
+  expires_at          Int?
+  token_type          String?
+  scope               String?
+  id_token            String? @db.Text
+  session_state       String?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  @@unique([provider, providerAccountId])
+  @@unique([provider, provider_account_id])
   @@map("accounts")
 }
 
 model Session {
-  id           String   @id @default(uuid())
-  sessionToken String   @unique @map("session_token")
-  userId       String   @map("user_id")
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String   @id @default(uuid())
+  session_token String   @unique @map("session_token")
+  user_id       String   @map("user_id")
+  expires       DateTime
+  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@map("sessions")
 }
@@ -91,22 +128,63 @@ model Gist {
   topics      Topic[]
   from        DateTime
   to          DateTime
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  author      User     @relation(fields: [authorId], references: [id])
-  authorId    String
+
+  // Organization and author
+  organization_id String       @map("organization_id")
+  organization    Organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  authorId        String       @map("author_id")
+  author          User         @relation(fields: [authorId], references: [id])
+
+  // Gist management
+  status       GistStatus @default(draft)
+  published_at DateTime?  @map("published_at")
+
+  // Assignment and approval workflow
+  assigned_by String?   @map("assigned_by") // Manager who assigned this gist
+  reviewed_by String?   @map("reviewed_by") // Manager who reviewed this gist
+  reviewed_at DateTime? @map("reviewed_at")
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   @@map("gists")
 }
 
+enum GistStatus {
+  draft
+  submitted // Writer submitted for review
+  approved // Manager approved
+  rejected // Manager rejected
+  published // Live/published
+  archived
+}
+
 model Topic {
-  id        String   @id @unique @default(uuid())
-  title     String
-  content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  gist      Gist?    @relation(fields: [gistId], references: [id])
-  gistId    String?
+  id         String   @id @unique @default(uuid())
+  title      String
+  content    String
+  order      Int?     @default(0) // For ordering topics within a gist
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  gist       Gist?    @relation(fields: [gist_id], references: [id], onDelete: Cascade)
+  gist_id    String?
 
   @@map("topics")
+}
+
+// Optional: Invitation system for better user management
+model Invitation {
+  id              String       @id @default(uuid())
+  email           String
+  role            Role
+  organization_id String       @map("organization_id")
+  organization    Organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  invited_by      String       @map("invited_by")
+  inviter         User         @relation(fields: [invited_by], references: [id])
+  token           String       @unique
+  expires_at      DateTime     @map("expires_at")
+  accepted_at     DateTime?    @map("accepted_at")
+  created_at      DateTime     @default(now())
+
+  @@map("invitations")
 }

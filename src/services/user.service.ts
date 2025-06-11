@@ -2,11 +2,12 @@ import { api, endpoints } from "@/lib/axios";
 import { useMemo } from "react";
 import useSWR from "swr";
 
-export function useGetUsers() {
-    const URL = endpoints.user
+export function useGetUsers({organizationId, shouldFetch}: { organizationId?: string; shouldFetch?: boolean }) {
+
+    const URL = organizationId ? `${endpoints.user}?organizationId=${organizationId}` : endpoints.user;
 
     const { data, isLoading, error, isValidating, mutate } = useSWR(
-        URL,
+        shouldFetch ? URL : null,
         async (url) => {
             const res = await api.get(url);
             return res.data;
@@ -35,6 +36,5 @@ export async function getUserById(id: string) {
 
 export async function updateUser(id: string, body: any) {
     const response = await api.put(`${endpoints.user}/${id}`, body)
-
     return response.data
 }

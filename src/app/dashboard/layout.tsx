@@ -18,7 +18,7 @@ export default function Layout({
   return (
     <div className="flex h-full w-full bg-background-100 dark:bg-background-900">
       <Sidebar open={open} routes={routes} setOpen={setOpen} variant="admin" />
-      <div className="h-full w-full font-dm dark:bg-navy-900">
+      <div className="h-full w-full font-dm dark:bg-navy-900 pl-6">
         <main
           className={`mx-2.5  flex-none transition-all dark:bg-navy-900 
               md:pr-2 xl:ml-[323px]`}

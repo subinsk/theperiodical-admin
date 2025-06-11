@@ -88,7 +88,7 @@ export default function LoginView(): JSX.Element {
             Sign In
           </h3>
           <p className="mb-9 ml-1 text-base text-gray-600">
-            Sign In with Google or Email
+            Sign In with Email
           </p>
 
           {error && (
@@ -97,7 +97,7 @@ export default function LoginView(): JSX.Element {
             </div>
           )}
 
-          <div className="flex flex-col gap-2">
+          {/* <div className="flex flex-col gap-2">
             <button
               className="flex h-[50px] w-full items-center justify-center gap-2 rounded-xl bg-lightPrimary hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed dark:bg-navy-800 dark:text-white"
               type="button"
@@ -117,7 +117,7 @@ export default function LoginView(): JSX.Element {
             <div className="h-px w-full bg-gray-200 dark:!bg-navy-700" />
             <p className="text-base text-gray-600"> or </p>
             <div className="h-px w-full bg-gray-200 dark:!bg-navy-700" />
-          </div>
+          </div> */}
 
           <InputField
             extra="mb-3"

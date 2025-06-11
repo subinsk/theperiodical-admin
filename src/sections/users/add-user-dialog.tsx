@@ -7,7 +7,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  Editor,
   Form,
   FormControl,
   FormField,
@@ -21,39 +20,48 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  FormDescription,
 } from "@/components";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
-import { adminAuthClient } from "@/lib/supabase/auth-admin-client";
-
-const ROLES = [
-  {
-    label: "User",
-    value: "user",
-  },
-  {
-    label: "Member",
-    value: "member",
-  },
-  {
-    label: "Admin",
-    value: "admin",
-  },
-];
+import { Invitation, User } from '@prisma/client';
+import { createInvitation } from "@/services/invitations.service";
+import { ROLES_MAP, getAvailableRoles } from "@/constants";
+import { useSession } from "next-auth/react";
+import {STATUS_MAP} from '@/constants/status';
+import { updateUser } from "@/services/user.service";
 
 export default function AddUserDialog({
   open,
   setOpen,
+  organizationId,
+  organizationName,
+  user,
+  isSuperAdmin,
+  refetchInvitations,
+  refetchUsers
 }: {
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  organizationId?: string;
+  organizationName?: string;
+  isSuperAdmin?: boolean;
+  user?: User,
+  refetchInvitations: ()=> void
+  refetchUsers: ()=> void
 }) {
+  // hooks
+    const {
+      data: session,
+      status
+    } = useSession();
+
+    const currUser = session?.user;
+
+  // form
   const userSchema = z.object({
     email: z
       .string({
@@ -62,14 +70,15 @@ export default function AddUserDialog({
       .email({
         message: "Email must be a valid email",
       }),
-    role: z.enum(["admin", "user", "member"]),
+    role: z.enum(["org_admin", "content_writer", "manager", "super_admin"]),
+    status: z.enum(["active", "inactive"]).optional(),
   });
 
   const form = useForm<z.infer<typeof userSchema>>({
     resolver: zodResolver(userSchema),
     defaultValues: {
       email: "",
-      role: "user",
+      role: isSuperAdmin ? "org_admin" : "content_writer",
     },
   });
 
@@ -79,42 +88,107 @@ export default function AddUserDialog({
   // functions
   const getButtonText = () => {
     if (isSubmitting) {
-      return "Adding...";
+      if(user){
+        return "Updating..."
+      }
+      return "Inviting...";
     }
-    return "Add";
+    if(user){
+      return "Update"
+    }
+    return "Send Invitation";
   };
 
-  const onSubmit = async (values: z.infer<typeof userSchema>) => {
+  const handleInviteUser = async (values: z.infer<typeof userSchema>) => {
     try {
       setIsSubmitting(true);
-      const data = adminAuthClient.generateLink({
-        type: "invite",
-        email: values.email,
-      });
 
-      console.log("data", data);
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to add user");
-    } finally {
-      setIsSubmitting(false);
+      const payload = {
+        email: values.email,
+        role: values.role,
+        organizationName
+      }
+
+      const response = await createInvitation(payload, organizationId);
+
+      refetchInvitations()
       setOpen(false);
       form.reset();
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error ? error.error : "Failed to add user");
+    } finally {
+      setIsSubmitting(false);
     }
   };
+
+  const handleUpdateUser = async (values: z.infer<typeof userSchema>) => {
+    try {
+      setIsSubmitting(true);
+
+      if (!user) {
+        throw new Error("User is not defined.");
+      }
+
+      const payload = {
+        email: values.email,
+        role: values.role,
+        status: values.status
+      };
+
+      await updateUser(user.id, payload);
+      toast.success("User updated successfully");
+      refetchUsers()
+      setOpen(false);
+      form.reset();
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error ? error.error : "Failed to update user");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  // effects
+  useEffect(() => {
+    if (user) {
+      form.setValue("email", user.email);
+      form.setValue("role", user.role);
+      form.setValue("status", user.status);
+    }
+  }, [user, form]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle>Add a User</DialogTitle>
+          <DialogTitle>{user ? 'Update User': 'Invite a User'}</DialogTitle>
           <DialogDescription>
-            Add a new user to the admin panel
+            {user ? 'Update the user' : 'Invite a user to your organization by entering their email and selecting a role. The user will receive an email invitation to join your organization.'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
+          <form onSubmit={form.handleSubmit(user ? handleUpdateUser : handleInviteUser)}>
             <Stack gap={2}>
+              <div>
+                {form.formState.errors.email && (
+                  <p className="text-red-500 text-sm">
+                    Email {form.formState.errors.email.message}
+                  </p>
+                )}
+                {form.formState.errors.role && (
+                  <p className="text-red-500 text-sm">
+                    Role {form.formState.errors.role.message}
+                  </p>
+                )}
+                <div>
+                  {form.formState.errors.status && (
+                    <p className="text-red-500 text-sm">
+                      Status {form.formState.errors.status.message}
+                    </p>
+                  )}
+                </div>
+              </div>
               <FormField
                 control={form.control}
                 name="email"
@@ -125,6 +199,7 @@ export default function AddUserDialog({
                       <InputField
                         id="email"
                         placeholder="Enter email"
+                        disabled={user}
                         {...field}
                       />
                     </FormControl>
@@ -141,16 +216,47 @@ export default function AddUserDialog({
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
+                      disabled={isSuperAdmin}
                     >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select role" />
                         </SelectTrigger>
-                      </FormControl>
+                      </FormControl>                      
                       <SelectContent>
-                        {ROLES.map((role) => (
-                          <SelectItem key={role.value} value={role.value}>
-                            {role.label}
+                        {getAvailableRoles(currUser?.role, isSuperAdmin)
+                          .map((role) => (
+                            <SelectItem key={role} value={role}>
+                              {ROLES_MAP[role].label}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              {
+                user &&
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                      </FormControl>                      
+                      <SelectContent>
+                        {Object.keys(STATUS_MAP).filter((item)=> item !== "invited").map((status) => (
+                          <SelectItem key={status} value={status}>
+                            {STATUS_MAP[status].label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -159,6 +265,7 @@ export default function AddUserDialog({
                   </FormItem>
                 )}
               />
+}
             </Stack>
             <Button type="submit" className="mt-5">
               {isSubmitting && (

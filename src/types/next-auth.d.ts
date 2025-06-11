@@ -11,7 +11,13 @@ declare module "next-auth" {
             image?: string | null
             role?: Role | null
             status?: Status | null
-        }
+            organization_id?: string | null
+            organization?: {
+                id: string
+                name: string
+                slug: string
+            } | null
+        } & DefaultSession['user'];
     }
 
     interface User {
@@ -21,6 +27,12 @@ declare module "next-auth" {
         image?: string | null
         role?: Role | null
         status?: Status | null
+        organization_id?: string | null
+    organization?: {
+        id: string
+        name: string
+        slug: string
+    } | null
     }
 }
 
@@ -29,5 +41,11 @@ declare module "next-auth/jwt" {
         sub?: string
         role?: Role | null
         status?: Status | null
+        organization_id?: string | null
+        organization?: {
+            id: string
+            name: string
+            slug: string
+        } | null
     }
 }

@@ -1,21 +1,22 @@
 import { Button, InputField, Label, Stack } from "@/components";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Icon } from "@iconify/react";
 import Image from "next/image";
-import useGetUser from "@/hooks/use-get-user";
+import { useSession } from "next-auth/react"
 import { Loader2 } from "lucide-react";
 import { updateUser } from "@/services/user.service";
 import toast from "react-hot-toast";
+import { Loader } from "@/components/ui/loader";
 
 export default function Profile() {
   // states
-  const [name, setName] = useState<string>("Subin S K");
-  const [phone, setPhone] = useState<string>("8094774065");
-  const [email, setEmail] = useState<string>("subinsk284@gmail.com");
+  const [name, setName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // hooks
-  const user = useGetUser();
+  const { data: session, status } = useSession()
+  const user = session?.user;
 
   // functions
   const getButtonText = () => {
@@ -29,9 +30,12 @@ export default function Profile() {
     try {
       setIsSubmitting(true);
 
+      if (!user) {
+        throw new Error("User is not defined.");
+      }
+
       const response = await updateUser(user.id, {
         name,
-        phone,
       });
 
       if (response.success) {
@@ -44,60 +48,63 @@ export default function Profile() {
     }
   };
 
+  // effects
+  useEffect(() => {
+    if (user) {
+      setName(user.name || '')
+      setEmail(user.email)
+    }
+  }, [user])
+
   return (
-    <div className="flex flex-col gap-8 px-8">
-      <div className="flex gap-8 items-center">
-        {user && user?.user_metadata?.avatar_url ? (
-          <Image
-            alt={user?.user_metadata?.name}
-            className="h-48 w-48 rounded-full"
-            height="20"
-            src={user?.user_metadata?.avatar_url}
-            width="2"
-          />
-        ) : (
-          <Icon
-            icon="radix-icons:avatar"
-            className="h-48 w-48 dark:text-white"
-          />
-        )}
-        <div className="grid grid-cols-2 gap-8 mt-12 w-full">
-          <div className="grid col-span-1 w-full max-w-sm items-center gap-1.5">
-            <Label htmlFor="email">Email</Label>
-            <InputField
-              type="email"
-              id="email"
-              placeholder="Email"
-              value={email}
-              disabled
-            />
+    <>
+      {status === "authenticated" && (
+        <div className="flex flex-col gap-8 px-8">
+          <div className="flex gap-8 items-center">
+            {user && user.image ? (
+              <Image
+                alt={user.name || 'User Image'}
+                className="h-48 w-48 rounded-full"
+                height={192}
+                width={192}
+                src={user.image}
+              />
+            ) : (
+              <Icon
+                icon="radix-icons:avatar"
+                className="h-48 w-48 dark:text-white"
+              />
+            )}
+            <div className="grid grid-cols-2 gap-8 mt-12 w-full">
+              <div className="grid col-span-1 w-full max-w-sm items-center gap-1.5">
+                <Label htmlFor="email">Email</Label>
+                <InputField
+                  type="email"
+                  id="email"
+                  placeholder="Email"
+                  value={email}
+                  disabled
+                />
+              </div>
+              <div className="grid col-span-1 w-full max-w-sm items-center gap-1.5">
+                <Label htmlFor="name">Name</Label>
+                <InputField
+                  type="text"
+                  id="name"
+                  placeholder="Name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+            </div>
           </div>
-          <div className="grid col-span-1 w-full max-w-sm items-center gap-1.5">
-            <Label htmlFor="name">Name</Label>
-            <InputField
-              type="name"
-              id="name"
-              placeholder="Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
-          <div className="grid col-span-1 w-full max-w-sm items-center gap-1.5">
-            <Label htmlFor="phone">Phone</Label>
-            <InputField
-              type="phone"
-              id="phone"
-              placeholder="Phone"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
-          </div>
+          <Button className="mt-5 mx-auto" onClick={handleUpdateProfile}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {getButtonText()}
+          </Button>
         </div>
-      </div>
-      <Button className="mt-5 mx-auto" onClick={handleUpdateProfile}>
-        {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        {getButtonText()}
-      </Button>
-    </div>
-  );
+      )}
+      {status === "loading" && <Loader />}
+    </>
+  )
 }

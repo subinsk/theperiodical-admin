@@ -17,9 +17,11 @@ import {
 import { CreateTopicDialog } from "@/sections/gists/create/create-topic-dialog";
 import { forwardRef, useState } from "react";
 import { Icon } from "@iconify/react";
-import { DeleteConfirmDialog } from "@/sections/gists/create/delete-confirm-dialog";
 import EditGistDialog from "./edit-gist-dialog";
 import { DragDropContext, Draggable, Droppable } from "react-beautiful-dnd";
+import toast from "react-hot-toast";
+import { deleteTopic } from "@/services/topic.service";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 type Topic = {
   id: string;
@@ -34,6 +36,7 @@ type Topic = {
 
 const TopicCard = forwardRef<HTMLDivElement, Topic>(
   ({ id, index, title, content, setTopics, gistId, ...props }, ref) => {
+    // states
     const [openDeleteConfirmDialog, setOpenDeleteConfirmDialog] =
       useState<boolean>(false);
     const [openEditTopicDialog, setOpenEditTopicDialog] =
@@ -43,7 +46,38 @@ const TopicCard = forwardRef<HTMLDivElement, Topic>(
       title: string;
       content: string;
     } | null>(null);
+    const [isDeleting, setIsDeleting] = useState<boolean>(false);
+    const [selectedTopicId, setSelectedTopicId] = useState<string>("");
 
+
+  // functions
+  const handleCancel = () => {
+    setSelectedTopic(null);
+  };
+
+  const handleDeleteTopic = async () => {
+    try {
+      setIsDeleting(true);
+      const response = await deleteTopic(selectedTopicId);
+
+      if (response.success) {
+        toast.success("Topic deleted successfully!");
+
+        setTopics((prev) =>
+          prev.filter((topic) => topic.id !== selectedTopicId)
+        );
+
+        setOpenEditTopicDialog(false);
+      } else {
+        throw new Error("Failed to delete topic!");
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to delete topic!");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
     return (
       <Draggable draggableId={id} index={index} key={id}>
         {(provided, snapshot) => (
@@ -90,18 +124,18 @@ const TopicCard = forwardRef<HTMLDivElement, Topic>(
                     </Button>
                     <CreateTopicDialog
                       open={openEditTopicDialog}
-                      selectedTopic={selectedTopic || undefined}
-                      setSelectedTopic={setSelectedTopic}
                       setOpen={setOpenEditTopicDialog}
                       setTopics={setTopics}
                       gistId={gistId}
                     />
-                    <DeleteConfirmDialog
+                    <ConfirmDialog
                       open={openDeleteConfirmDialog}
-                      selectedTopicId={selectedTopic?.id || ""}
                       setOpen={setOpenDeleteConfirmDialog}
-                      setSelectedTopic={setSelectedTopic}
-                      setTopics={setTopics}
+                      title="Are you sure you want to delete this topic?"
+                      description="This action cannot be undone. This will permanently delete this topic."
+                      isLoading={isDeleting}
+                      onCancel={handleCancel}
+                      onDelete={handleDeleteTopic}
                     />
                   </Stack>
                 </Stack>

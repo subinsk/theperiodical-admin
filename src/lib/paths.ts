@@ -6,6 +6,9 @@ export const paths = {
       list: "/dashboard/gists",
       page: "/dashboard/gists",
     },
+    organization:{
+      edit: (slug: string) => `/dashboard/settings/organization/${slug}`,
+    },
     layout: "/dashboard",
   },
   home: "/",

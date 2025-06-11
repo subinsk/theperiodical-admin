@@ -24,7 +24,10 @@ export const fetcher = async (
 export const endpoints = {
   gist: "/gist",
   topic: "/gist/topic",
-  user: "/user"
+  user: "/user",
+  invitations: "/invitations",
+  organizations: "/organizations",
+  organization: (id: string) => `/organizations/${id}`,
 };
 
 export { api };

@@ -21,6 +21,13 @@ interface DatabaseUser {
     image: string | null
     role: Role | null
     status: Status | null
+    organization_id?: string | null
+    organization?: {
+        id: string
+        name: string
+        slug: string
+    } | null
+    
 }
 
 export const authOptions: NextAuthOptions = {
@@ -42,10 +49,13 @@ export const authOptions: NextAuthOptions = {
                 }
 
                 const user: DatabaseUser | null = await prisma.user.findUnique({
-                    where: {
-                        email: credentials.email
-                    }
-                })
+          where: { email: credentials.email },
+          include: {
+            organization: {
+              select: { id: true, name: true, slug: true }
+            }
+          }
+        });
 
                 if (!user || !user.password) {
                     return null
@@ -67,6 +77,8 @@ export const authOptions: NextAuthOptions = {
                     image: user.image,
                     role: user.role,
                     status: user.status,
+                    organization_id: user.organization_id,
+          organization: user.organization,
                 }
             }
         })
@@ -79,6 +91,8 @@ export const authOptions: NextAuthOptions = {
             if (user) {
                 token.role = user.role
                 token.status = user.status
+                token.organization_id = user.organization_id;
+        token.organization = user.organization;
             }
             return token
         },
@@ -87,6 +101,8 @@ export const authOptions: NextAuthOptions = {
                 session.user.id = token.sub
                 session.user.role = token.role
                 session.user.status = token.status
+                session.user.organization_id = token.organization_id;
+                session.user.organization = token.organization;
             }
             return session
         },
