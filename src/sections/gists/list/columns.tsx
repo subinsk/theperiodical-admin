@@ -35,6 +35,13 @@ export const columns: ColumnDef<Gist>[] = [
     },
   },
   {
+    accessorKey: "author",
+    header: "Author",
+    cell(props: any) {
+      return <div className="text-nowrap">{props.row.original.author}</div>;
+    },
+  },
+  {
     accessorKey: "actions",
     header: "Actions",
     cell(props: any) {

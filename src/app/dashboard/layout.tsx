@@ -2,10 +2,12 @@
 
 import { usePathname } from "next/navigation";
 import React, { useState } from "react";
-import { Footer, Navbar } from "@/components";
+import { Button, DynamicBreadcrumb, Footer, Navbar, Separator, Stack } from "@/components";
 import { Sidebar } from "@/components/sidebar";
 import { routes } from "@/lib";
 import { getActiveNavbar, getActiveRoute } from "@/utils";
+import { Icon } from "@iconify/react";
+import { DynamicBackButton } from "@/components/dynamic-back-button";
 
 export default function Layout({
   children,
@@ -15,6 +17,7 @@ export default function Layout({
   // states and functions
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+
   return (
     <div className="flex h-full w-full bg-background-100 dark:bg-background-900">
       <Sidebar open={open} routes={routes} setOpen={setOpen} variant="admin" />
@@ -32,7 +35,18 @@ export default function Layout({
               secondary={getActiveNavbar(routes, pathname)}
             />
             <div className="mx-auto min-h-screen p-2 !pt-[30px] md:p-2">
-              {children}
+              <div className="flex flex-col gap-8">
+                {
+                  pathname !== "/dashboard" && (
+                    <Stack direction="row" align="center" gap={3}>
+                      <DynamicBackButton />
+                      <Separator orientation="vertical" className="h-10" />
+                      <DynamicBreadcrumb />
+                    </Stack>
+                  )
+                }
+                {children}
+              </div>
             </div>
             <div className="p-3">
               <Footer />

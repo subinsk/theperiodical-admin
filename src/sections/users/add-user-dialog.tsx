@@ -20,25 +20,35 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  Command,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
 } from "@/components";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import toast from "react-hot-toast";
-import { Loader2 } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2 } from "lucide-react";
 import { Invitation, User } from '@prisma/client';
 import { createInvitation } from "@/services/invitations.service";
 import { ROLES_MAP, getAvailableRoles } from "@/constants";
 import { useSession } from "next-auth/react";
-import {STATUS_MAP} from '@/constants/status';
+import { STATUS_MAP } from '@/constants/status';
 import { updateUser } from "@/services/user.service";
+import { cn } from "@/lib";
+import { useGetOrganizations } from "@/services/organization.service";
 
 export default function AddUserDialog({
   open,
   setOpen,
   organizationId,
-  organizationName,
   user,
   isSuperAdmin,
   refetchInvitations,
@@ -47,19 +57,27 @@ export default function AddUserDialog({
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   organizationId?: string;
-  organizationName?: string;
   isSuperAdmin?: boolean;
   user?: User,
-  refetchInvitations: ()=> void
-  refetchUsers: ()=> void
+  refetchInvitations: () => void
+  refetchUsers: () => void
 }) {
   // hooks
-    const {
-      data: session,
-      status
-    } = useSession();
+  const {
+    data: session,
+    status
+  } = useSession();
 
-    const currUser = session?.user;
+  const currUser = session?.user;
+
+  const {
+    organizations,
+    organizationsLoading,
+    organizationsError,
+    organizationsValidating,
+    organizationsEmpty,
+    refetch: refetchOrganizations
+  } = useGetOrganizations({ shouldFetch: true });
 
   // form
   const userSchema = z.object({
@@ -72,13 +90,14 @@ export default function AddUserDialog({
       }),
     role: z.enum(["org_admin", "content_writer", "manager", "super_admin"]),
     status: z.enum(["active", "inactive"]).optional(),
-  });
-
-  const form = useForm<z.infer<typeof userSchema>>({
+    organization: z.string(),
+  });  const form = useForm<z.infer<typeof userSchema>>({
     resolver: zodResolver(userSchema),
     defaultValues: {
       email: "",
       role: isSuperAdmin ? "org_admin" : "content_writer",
+      status: undefined,
+      organization: "",
     },
   });
 
@@ -88,12 +107,12 @@ export default function AddUserDialog({
   // functions
   const getButtonText = () => {
     if (isSubmitting) {
-      if(user){
+      if (user) {
         return "Updating..."
       }
       return "Inviting...";
     }
-    if(user){
+    if (user) {
       return "Update"
     }
     return "Send Invitation";
@@ -106,10 +125,10 @@ export default function AddUserDialog({
       const payload = {
         email: values.email,
         role: values.role,
-        organizationName
       }
 
       const response = await createInvitation(payload, organizationId);
+      toast.success("User invited successfully");
 
       refetchInvitations()
       setOpen(false);
@@ -149,46 +168,41 @@ export default function AddUserDialog({
     }
   }
 
-  // effects
   useEffect(() => {
-    if (user) {
-      form.setValue("email", user.email);
-      form.setValue("role", user.role);
-      form.setValue("status", user.status);
+    if (form) {
+      const newValues: Partial<z.infer<typeof userSchema>> = {};
+      
+      if (user) {
+        newValues.email = user.email;
+        newValues.role = user.role;
+        newValues.status = user.status;
+        if (user.organization_id) {
+          newValues.organization = user.organization_id;
+        }
+      }
+      
+      if (organizationId && !newValues.organization) {
+        newValues.organization = organizationId;
+      }
+
+      if (Object.keys(newValues).length > 0) {
+        form.reset({ ...form.getValues(), ...newValues });
+      }
     }
-  }, [user, form]);
+  }, [user, organizationId, form]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-xl">
         <DialogHeader>
-          <DialogTitle>{user ? 'Update User': 'Invite a User'}</DialogTitle>
+          <DialogTitle>{user ? 'Update User' : 'Invite a User'}</DialogTitle>
           <DialogDescription>
-            {user ? 'Update the user' : 'Invite a user to your organization by entering their email and selecting a role. The user will receive an email invitation to join your organization.'}
+            {user ? 'Update user details by changing their role or status' : 'Invite a user to your organization by entering their email and selecting a role. The user will receive an email invitation to join your organization.'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(user ? handleUpdateUser : handleInviteUser)}>
-            <Stack gap={2}>
-              <div>
-                {form.formState.errors.email && (
-                  <p className="text-red-500 text-sm">
-                    Email {form.formState.errors.email.message}
-                  </p>
-                )}
-                {form.formState.errors.role && (
-                  <p className="text-red-500 text-sm">
-                    Role {form.formState.errors.role.message}
-                  </p>
-                )}
-                <div>
-                  {form.formState.errors.status && (
-                    <p className="text-red-500 text-sm">
-                      Status {form.formState.errors.status.message}
-                    </p>
-                  )}
-                </div>
-              </div>
+            <Stack gap={4}>
               <FormField
                 control={form.control}
                 name="email"
@@ -199,7 +213,7 @@ export default function AddUserDialog({
                       <InputField
                         id="email"
                         placeholder="Enter email"
-                        disabled={user}
+                        disabled={!!user}
                         {...field}
                       />
                     </FormControl>
@@ -222,7 +236,7 @@ export default function AddUserDialog({
                         <SelectTrigger>
                           <SelectValue placeholder="Select role" />
                         </SelectTrigger>
-                      </FormControl>                      
+                      </FormControl>
                       <SelectContent>
                         {getAvailableRoles(currUser?.role, isSuperAdmin)
                           .map((role) => (
@@ -236,36 +250,106 @@ export default function AddUserDialog({
                   </FormItem>
                 )}
               />
-              {
-                user &&
+              {user &&
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {Object.keys(STATUS_MAP).filter((item) => item !== "invited").map((status) => (
+                            <SelectItem key={status} value={status}>
+                              {STATUS_MAP[status as keyof typeof STATUS_MAP].label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />}
               <FormField
                 control={form.control}
-                name="status"
+                name="organization"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                      </FormControl>                      
-                      <SelectContent>
-                        {Object.keys(STATUS_MAP).filter((item)=> item !== "invited").map((status) => (
-                          <SelectItem key={status} value={status}>
-                            {STATUS_MAP[status].label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <FormItem className={cn("flex flex-col gap-1", !!user?.organization_id || !!organizationId ? "cursor-not-allowed" : "")}>
+                    <FormLabel>Organization</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            disabled={!!user?.organization_id || !!organizationId} 
+                            className={cn(
+                              "justify-between",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value
+                              ? organizations.map((organization: any) => {
+                                if (organization.id === field.value) {
+                                  return organization.name;
+                                }
+                              })
+                              : "Select organization"}
+                            <ChevronsUpDown className="opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent aria-modal={true} style={{ pointerEvents: "auto" }} className="p-0 z-50">
+                        <Command>
+                          <CommandInput
+                            placeholder="Search organization..."
+                            className="h-9"
+                          />
+                          <CommandList>
+                            <CommandEmpty>No organization found.</CommandEmpty>
+                            <CommandGroup>
+                              {organizations
+                                .map((organization: any) => (
+                                  <CommandItem
+                                    value={organization.name}
+                                    key={organization.id}
+                                    onSelect={() => {
+                                      if (organization.id === field.value) {
+                                        form.setValue("organization", "");
+                                      }
+                                      else {
+                                        form.setValue("organization", organization.id)
+                                      }
+                                    }}
+                                  >
+                                    {organization.name}
+                                    <Check
+                                      className={cn(
+                                        "ml-auto",
+                                        organization.id === field.value
+                                          ? "opacity-100"
+                                          : "opacity-0"
+                                      )}
+                                    />
+                                  </CommandItem>
+                                ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-}
             </Stack>
             <Button type="submit" className="mt-5">
               {isSubmitting && (

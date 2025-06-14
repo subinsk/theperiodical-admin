@@ -8,7 +8,7 @@ import { updateUser } from "@/services/user.service";
 import toast from "react-hot-toast";
 import { Loader } from "@/components/ui/loader";
 
-export default function Profile() {
+export const SettingsProfileView = () => {
   // states
   const [name, setName] = useState<string>("");
   const [email, setEmail] = useState<string>("");

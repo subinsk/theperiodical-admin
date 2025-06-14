@@ -27,7 +27,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import toast from "react-hot-toast";
 import { Loader2 } from "lucide-react";
-import { PLANS } from "@/constants/plans";
+import { PLANS_MAP } from "@/constants/plans";
 import { createOrganization } from "@/services/organization.service";
 
 
@@ -46,7 +46,7 @@ refetchOrganizations: () => void;
         required_error: "Name is required",
       })
     ,
-    plan_type: z.enum(PLANS.map(plan => plan.value) as [string, ...string[]], {
+    plan_type: z.enum(Object.keys(PLANS_MAP) as [string, ...string[]], {
       required_error: "Plan is required",
       invalid_type_error: "Invalid plan selected",
     }),
@@ -57,7 +57,7 @@ refetchOrganizations: () => void;
     resolver: zodResolver(orgSchema),
     defaultValues: {
       name: "",
-        plan_type: PLANS[0].value, // Default to the first plan
+      plan_type: PLANS_MAP.free.value, // Default to the free plan
     },
   });
 
@@ -141,7 +141,7 @@ refetchOrganizations: () => void;
                         </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                        {PLANS.map((plan) => (
+                        {Object.values(PLANS_MAP).map((plan) => (
                         <SelectItem key={plan.value} value={plan.value}>
                             {plan.label}
                         </SelectItem>

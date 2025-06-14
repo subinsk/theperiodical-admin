@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const user = await prisma.user.findUnique({ where: { id: session.user.id } });
-    if (!user || user.role !== 'super_admin') {
+    if (!user) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -32,7 +32,14 @@ export async function GET(request: NextRequest) {
     }
     else {
       const organizations = await prisma.organization.findMany({
-        orderBy: { created_at: 'desc' }
+        orderBy: { created_at: 'desc' }, 
+        include:{
+          _count:{
+            select:{
+              users: true
+            }
+          }
+        }
       });
 
       return NextResponse.json({ organizations });
@@ -57,7 +64,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { name, description, logo, plan_type, max_writers } = body;
+  const { name, description, logo, plan_type, max_members } = body;
 
   // Validate required fields
   if (!name || !plan_type) {
@@ -75,16 +82,16 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    let maxWriters = max_writers
+    let maxMembers = max_members
 
-    if (!maxWriters) {
+    if (!maxMembers) {
       if (plan_type === 'premium') {
-        maxWriters = 20;
+        maxMembers = 20;
       }
       else if (plan_type === 'enterprise') {
-        maxWriters = 50;
+        maxMembers = 50;
       } else {
-        maxWriters = 5;
+        maxMembers = 5;
       }
     }
 
@@ -95,12 +102,13 @@ export async function POST(request: NextRequest) {
         description,
         logo,
         plan_type,
-        max_writers: maxWriters
+        max_members: maxMembers
       }
     });
 
     return NextResponse.json({ message: 'Organization created', organization: newOrg });
   } catch (error) {
+    console.log('error: ', error)
     return NextResponse.json({ error: 'Failed to create organization', details: error }, { status: 500 });
   }
 }

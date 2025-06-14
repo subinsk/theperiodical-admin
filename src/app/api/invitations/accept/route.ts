@@ -51,10 +51,10 @@ export async function POST(request: NextRequest) {
       const updatedUser = await prisma.user.update({
         where: { id: existingUser.id },
         data: {
-          organization_id: invitation.organization_id,
           role: invitation.role,
-          invited_by: invitation.invited_by,
-          invited_at: new Date()
+          organization:{
+            connect: { id: invitation.organization_id }
+          },
         }
       });
 
@@ -82,10 +82,10 @@ export async function POST(request: NextRequest) {
           email: invitation.email,
           name,
           password: hashedPassword,
-          organization_id: invitation.organization_id,
+          organization:{
+            connect: { id: invitation.organization_id }
+          },
           role: invitation.role,
-          invited_by: invitation.invited_by,
-          invited_at: new Date(),
           email_verified: new Date() // Auto-verify email for invited users
         }
       });
@@ -97,7 +97,11 @@ export async function POST(request: NextRequest) {
     await prisma.invitation.update({
       where: { id: invitation.id },
       data: {
-        accepted_at: new Date()
+        status: 'accepted',
+        accepted_at: new Date(),
+        invited_user:{
+          connect: { id: userId }
+        }
       }
     });
 

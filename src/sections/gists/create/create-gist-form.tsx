@@ -1,6 +1,12 @@
 import {
   Button,
   Calendar,
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
   Form,
   FormControl,
   FormDescription,
@@ -18,7 +24,7 @@ import {
 } from "@/components";
 import { gistSchema } from "@/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CalendarIcon, Loader2 } from "lucide-react";
+import { CalendarIcon, Loader2, Check, ChevronsUpDown } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { format } from "date-fns";
@@ -26,6 +32,9 @@ import { cn } from "@/lib";
 import { Icon } from "@iconify/react";
 import { useEffect, useState } from "react";
 import { createGist, updateGist } from "@/services/gist.service";
+import { useGetUsers } from "@/services/user.service";
+import { useSession } from "next-auth/react";
+import toast from "react-hot-toast";
 
 export default function CreateGistForm({
   setGistId,
@@ -44,6 +53,16 @@ export default function CreateGistForm({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   // hooks
+  const {
+    users,
+    usersLoading,
+  } = useGetUsers({
+    role: "content_writer",
+    shouldFetch: true,
+  })
+
+  const { data: session, status } = useSession()
+
   const form = useForm<z.infer<typeof gistSchema>>({
     resolver: zodResolver(gistSchema),
     defaultValues: {
@@ -51,6 +70,7 @@ export default function CreateGistForm({
       description: "",
       from: new Date(),
       to: new Date(),
+      author: "",
     },
   });
 
@@ -82,17 +102,32 @@ export default function CreateGistForm({
           throw new Error("Failed to update the gist");
         }
       } else {
-        const response = await createGist(values);
+        const payload = {
+          title: values.title,
+          description: values.description,
+          from: values.from,
+          to: values.to,
+          organizationId: session?.user.organization.id,
+          authorId: values.author,
+          assignedBy: session?.user.id,
+        }
 
-        if (response.success) {
-          if (setGistId) {
-            setGistId(response.data.id);
-          }
-          setGistDetails(response.data);
-        } else throw new Error("Failed to create the gist");
+        const response = await createGist(payload);
+
+        if (setGistId) {
+          setGistId(response.data.id);
+        }
+        setGistDetails(response.data);
       }
-    } catch (e) {
+    } catch (e: any) {
       console.log(e);
+      if (typeof e.error === "string") {
+        toast.error(e.error);
+      } else if (e.message) {
+        toast.error(e.message);
+      } else {
+        toast.error("Error occured");
+      }
     } finally {
       setIsSubmitting(false);
       form.reset();
@@ -119,7 +154,7 @@ export default function CreateGistForm({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)}>
         <div className="grid grid-cols-12 gap-8">
-          <div className="col-span-12">
+          <div className="col-span-9">
             <FormField
               control={form.control}
               name="title"
@@ -129,6 +164,79 @@ export default function CreateGistForm({
                   <FormControl>
                     <InputField id="title" placeholder="Title" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className="col-span-3">
+            <FormField
+              control={form.control}
+              name="author"
+              render={({ field }) => (
+                <FormItem className="flex flex-col gap-3">
+                  <FormLabel>Assigned To</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className={cn(
+                            "w-[200px] justify-between",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          {field.value
+                            ? users.map((user: any) => {
+                              if (user.id === field.value) {
+                                return user.name;
+                              }
+                            })
+                            : "Select author"}
+                          <ChevronsUpDown className="opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[200px] p-0">
+                      <Command>
+                        <CommandInput
+                          placeholder="Search author..."
+                          className="h-9"
+                        />
+                        <CommandList>
+                          <CommandEmpty>No author found.</CommandEmpty>
+                          <CommandGroup>
+                            {users
+                              .map((user: any) => (
+                                <CommandItem
+                                  value={user.name}
+                                  key={user.id}
+                                  onSelect={() => {
+                                    if (user.id === field.value) {
+                                      form.setValue("author", "");
+                                    }
+                                    else {
+                                      form.setValue("author", user.id)
+                                    }
+                                  }}
+                                >
+                                  {user.name}
+                                  <Check
+                                    className={cn(
+                                      "ml-auto",
+                                      user.id === field.value
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                  />
+                                </CommandItem>
+                              ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
                   <FormMessage />
                 </FormItem>
               )}

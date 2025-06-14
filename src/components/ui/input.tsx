@@ -34,7 +34,7 @@ export function InputField({
   const [showPassword, setShowPassword] = useState(false);
 
   const inputClassName = cn(
-    "mt-2 flex h-12 w-full items-center justify-center border rounded-xl bg-white/0 p-3 text-sm outline-none",
+    "mt-2 flex h-12 w-full items-center justify-center rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
     disabled &&
       "!border-none !bg-gray-100 dark:!bg-white/5 dark:placeholder:!text-[rgba(255,255,255,0.15)]",
     state === "error" &&
@@ -43,7 +43,7 @@ export function InputField({
       "border-green-500 text-green-500 placeholder:text-green-500 dark:!border-green-400 dark:!text-green-400 dark:placeholder:!text-green-400",
     !disabled &&
       !state &&
-      "border-gray-800 dark:!border-white/10 dark:text-white"
+      "dark:!border-white/10 dark:text-white"
   );
 
   return (

@@ -11,10 +11,13 @@ export function useGetOrganizations({
   const URL = slug ? `${endpoints.organizations}/${slug}` : endpoints.organizations;
 
   const { data, isLoading, error, isValidating, mutate } = useSWR(
-    shouldFetch ? URL:  null,
+    shouldFetch ? URL : null,
     async (url) => {
       const res = await api.get(url);
       return res.data;
+    },
+    {
+      refreshInterval: 0,
     }
   );
 

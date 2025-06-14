@@ -10,6 +10,9 @@ export function useGetGists(slug?: string) {
     async (url) => {
       const res = await api.get(url);
       return res.data;
+    },
+    {
+      refreshInterval: 0,
     }
   );
 

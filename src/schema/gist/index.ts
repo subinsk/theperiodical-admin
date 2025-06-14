@@ -1,7 +1,4 @@
 import { z } from "zod";
-import { topicSchema } from "./topic";
-
-export * from "./topic";
 
 export const gistSchema = z.object({
   title: z
@@ -21,4 +18,5 @@ export const gistSchema = z.object({
   to: z.date({
     required_error: "To date is required",
   }),
+  author: z.string().uuid().optional(),
 });

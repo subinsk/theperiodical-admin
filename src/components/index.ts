@@ -1,3 +1,4 @@
+export * from "./dynamic-breadcrumb";
 export * from "./editor";
 export * from "./footer";
 export * from "./icons";

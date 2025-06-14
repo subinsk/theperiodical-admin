@@ -1,7 +1,7 @@
 // app/invite/accept/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn, getSession } from 'next-auth/react';
 import toast from 'react-hot-toast';
@@ -21,7 +21,7 @@ interface InvitationData {
   expires_at: string;
 }
 
-export default function AcceptInvitePage() {
+function AcceptInviteContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
@@ -38,17 +38,6 @@ export default function AcceptInvitePage() {
     password: '',
     confirmPassword: ''
   });
-
-  useEffect(() => {
-    if (!token) {
-      setError('Invalid invitation link');
-      setLoading(false);
-      return;
-    }
-
-    // Fetch invitation details
-    fetchInvitationDetails();
-  }, [token]);
 
   const fetchInvitationDetails = async () => {
     try {
@@ -145,6 +134,18 @@ export default function AcceptInvitePage() {
     }
   };
 
+   useEffect(() => {
+    if (!token) {
+      setError('Invalid invitation link');
+      setLoading(false);
+      return;
+    }
+
+    // Fetch invitation details
+    fetchInvitationDetails();
+  }, [token]);
+
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -179,7 +180,7 @@ export default function AcceptInvitePage() {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            You're Invited!
+            You&apos;re Invited!
           </h2>
           <p className="mt-2 text-sm text-gray-600">
             Join {invitation?.organization.name}
@@ -270,5 +271,13 @@ export default function AcceptInvitePage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function AcceptInvitePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AcceptInviteContent />
+    </Suspense>
   );
 }

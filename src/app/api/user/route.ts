@@ -2,25 +2,18 @@ import { prisma } from "@/lib/prisma-client";
 import sendResponse from "@/lib/response";
 import { NextRequest, NextResponse } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const organizationId = searchParams.get('organizationId');
+        const role = searchParams.get('role');
 
         const response = await prisma.user.findMany({
             where: {
-                OR: [
-                    {
-                        role: "org_admin"
-                    },
-                    {
-                        role: "manager"
-                    },
-                    {
-                        role: "content_writer"
-                    }
-                ],
-                organization_id: organizationId ? organizationId : undefined
+                organization_id: organizationId ? organizationId : undefined,
+                role: role ? role : undefined,
             }
         });
 

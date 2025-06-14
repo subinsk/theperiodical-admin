@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { email, role, organizationName } = await request.json();
+    const { email, role } = await request.json();
     const { searchParams } = new URL(request.url);
     const organization_id = searchParams.get('organization_id');
 
@@ -62,13 +62,11 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const currOrgId = currentUser.role === "super_admin" ? organization_id : currentUser.organization_id
-
     // Check for existing pending invitation
     const existingInvitation = await prisma.invitation.findFirst({
       where: {
         email,
-        organization_id: currOrgId,
+        organization_id,
         accepted_at: null,
         expires_at: { gt: new Date() }
       }
@@ -78,56 +76,59 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Pending invitation already exists for this email' }, { status: 400 });
     }
 
+    const currOrg = await prisma.organization.findUnique({
+      where:{
+        id: organization_id
+      },
+      include:{
+          _count:{
+            select:{
+              users: {
+                where: {
+                  role: 'content_writer'
+                }
+              }
+            }
+          }
+        }
+    })
+
     // Check organization limits (for content_writer invitations)
     if (role === 'content_writer') {
-      const currentWriterCount = await prisma.user.count({
-        where: {
-          organization_id: currOrgId,
-          role: 'content_writer',
-          status: 'active'
-        }
-      });
+      const maxMembers = currOrg.max_members;
 
-      const maxWriters = currentUser.organization.max_writers || 5;
-      if (currentWriterCount >= maxWriters) {
+      if (currOrg._count.users >= maxMembers) {
         return NextResponse.json({
-          error: `Organization has reached maximum limit of ${maxWriters} content writers`
+          error: `Organization has reached maximum limit of ${maxMembers} content writers`
         }, { status: 400 });
       }
     }
 
-    // Generate unique invitation token
     const token = crypto.randomBytes(32).toString('hex');
 
-    // Set expiration (7 days from now)
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
-    // Create invitation
     const invitation = await prisma.invitation.create({
       data: {
         email,
         role,
-        organization_id: currOrgId,
-        invited_by: currentUser.id,
         token,
-        expires_at: expiresAt
-      },
-      include: {
-        organization: true,
+        expires_at: expiresAt,
+        organization:{
+          connect: { id: organization_id }
+        },
         inviter: {
-          select: { name: true, email: true }
-        }
-      }
+          connect: { id: currentUser.id }
+        },
+      },
     });
 
-    const currOrgName = currentUser.role === "super_admin" ? organizationName : currentUser.organization.name;
-    // Send invitation email
     try {
       await sendInvitationEmail({
         to: email,
         inviterName: currentUser.name || currentUser.email,
-        organizationName: currOrgName,
+        organizationName: currOrg.name,
         role,
         acceptUrl: `${process.env.NEXTAUTH_URL}/invite/accept?token=${token}`,
         expiresAt
@@ -168,7 +169,7 @@ export async function GET(request: NextRequest) {
       where: { id: session.user.id }
     });
 
-    if (!currentUser || !currentUser.organization_id) {
+    if (!currentUser || (!currentUser.organization_id && currentUser.role !== 'super_admin')) {
       return NextResponse.json({ error: 'User not found or not part of organization' }, { status: 404 });
     }
 
@@ -177,10 +178,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const organization_id = searchParams.get('organization_id');
+
     const invitations = await prisma.invitation.findMany({
       where: {
-        organization_id: currentUser.organization_id,
-        accepted_at: null // Only pending invitations
+        organization_id: organization_id,
+        accepted_at: null
       },
       include: {
         inviter: {
@@ -217,7 +221,7 @@ export async function DELETE(request: NextRequest) {
       where: { id: session.user.id }
     });
 
-    if (!currentUser || !currentUser.organization_id) {
+    if (!currentUser || (!currentUser.organization_id && currentUser.role !== 'super_admin')) {
       return NextResponse.json({ error: 'User not found or not part of organization' }, { status: 404 });
     }
 
@@ -230,7 +234,7 @@ export async function DELETE(request: NextRequest) {
       where: { id: invitationId }
     });
 
-    if (!invitation || invitation.organization_id !== currentUser.organization_id) {
+    if (!invitation || (currentUser.role !== 'super_admin' && invitation.organization_id !== currentUser.organization_id)) {
       return NextResponse.json({ error: 'Invitation not found or does not belong to your organization' }, { status: 404 });
     }
 

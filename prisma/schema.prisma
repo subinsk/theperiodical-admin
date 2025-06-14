@@ -11,15 +11,37 @@ datasource db {
 }
 
 enum Role {
-  super_admin // Platform level - can manage everything
-  org_admin // Organization level - can manage the entire organization
-  manager // Can manage content writers within the organization
-  content_writer // Can only create/edit gists
+  super_admin
+  org_admin
+  manager
+  content_writer
 }
 
 enum Status {
   active
   inactive
+}
+
+enum GistStatus {
+  draft
+  submitted
+  approved
+  rejected
+  published
+  archived
+}
+
+enum InvitationStatus {
+  pending
+  accepted
+  expired
+  revoked
+}
+
+enum PlanType {
+  free
+  premium
+  enterprise
 }
 
 model Organization {
@@ -30,14 +52,13 @@ model Organization {
   logo        String?
   status      Status  @default(active)
 
-  // Billing/subscription info (optional for future)
-  plan_type   String? @default("free") // free, premium, enterprise
-  max_writers Int?    @default(5) // limit on content writers
+  plan_type   PlanType  @default(free)
+  plan_expiry DateTime?
+  max_members Int?      @default(5)
 
-  created_at DateTime @default(now()) @map("created_at")
-  updated_at DateTime @updatedAt @map("updated_at")
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
-  // Relations
   users       User[]
   gists       Gist[]
   invitations Invitation[]
@@ -51,42 +72,37 @@ model User {
   name           String?
   phone          String?
   password       String?
-  email_verified DateTime? @map("email_verified")
+  email_verified DateTime?
   image          String?
 
-  // Role and organization
   role            Role          @default(content_writer)
   status          Status        @default(active)
-  organization_id String?       @map("organization_id")
+  organization_id String?
   organization    Organization? @relation(fields: [organization_id], references: [id], onDelete: Cascade)
 
-  // Invitation system
-  invited_by String?   @map("invited_by") // User ID who invited this user
-  invited_at DateTime? @map("invited_at")
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
-  created_at DateTime @default(now()) @map("created_at")
-  updated_at DateTime @updatedAt @map("updated_at")
+  authored_gists       Gist[]       @relation("GistAuthor")
+  accounts             Account[]
+  sessions             Session[]
+  sent_invitations     Invitation[] @relation("InviterUser")
+  accepted_invitations Invitation[] @relation("AcceptedInvitation")
+  assigned_gists       Gist[]       @relation("GistAssigner")
+  reviewed_gists       Gist[]       @relation("GistReviewer")
 
-  // Relations
-  gists       Gist[]
-  accounts    Account[]
-  sessions    Session[]
-  invitations Invitation[]
-
-  // Self-referential relation for invitation tracking
-  inviter       User?  @relation("UserInvitations", fields: [invited_by], references: [id])
-  invited_users User[] @relation("UserInvitations")
-
+  @@index([organization_id])
+  @@index([email])
+  @@index([status])
   @@map("users")
 }
 
-// NextAuth required models
 model Account {
   id                  String  @id @default(uuid())
-  user_id             String  @map("user_id")
+  user_id             String
   type                String
   provider            String
-  provider_account_id String  @map("provider_account_id")
+  provider_account_id String
   refresh_token       String? @db.Text
   access_token        String? @db.Text
   expires_at          Int?
@@ -98,16 +114,19 @@ model Account {
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@unique([provider, provider_account_id])
+  @@index([user_id])
   @@map("accounts")
 }
 
 model Session {
   id            String   @id @default(uuid())
-  session_token String   @unique @map("session_token")
-  user_id       String   @map("user_id")
+  session_token String   @unique
+  user_id       String
   expires       DateTime
   user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
+  @@index([user_id])
+  @@index([expires])
   @@map("sessions")
 }
 
@@ -117,74 +136,87 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+  @@index([expires])
   @@map("verificationtokens")
 }
 
 model Gist {
-  id          String   @id @unique @default(uuid())
+  id          String   @id @default(uuid())
   slug        String   @unique
   title       String
   description String?
-  topics      Topic[]
   from        DateTime
   to          DateTime
 
-  // Organization and author
-  organization_id String       @map("organization_id")
+  organization_id String
   organization    Organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
-  authorId        String       @map("author_id")
-  author          User         @relation(fields: [authorId], references: [id])
+  author_id       String
+  author          User         @relation("GistAuthor", fields: [author_id], references: [id])
 
-  // Gist management
   status       GistStatus @default(draft)
-  published_at DateTime?  @map("published_at")
+  published_at DateTime?
 
-  // Assignment and approval workflow
-  assigned_by String?   @map("assigned_by") // Manager who assigned this gist
-  reviewed_by String?   @map("reviewed_by") // Manager who reviewed this gist
-  reviewed_at DateTime? @map("reviewed_at")
+  assigned_by String?
+  assigner    User?   @relation("GistAssigner", fields: [assigned_by], references: [id])
+  reviewed_by String?
+  reviewer    User?   @relation("GistReviewer", fields: [reviewed_by], references: [id])
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
+  topics Topic[]
+
+  @@index([organization_id])
+  @@index([author_id])
+  @@index([status])
+  @@index([slug])
+  @@index([from, to])
   @@map("gists")
 }
 
-enum GistStatus {
-  draft
-  submitted // Writer submitted for review
-  approved // Manager approved
-  rejected // Manager rejected
-  published // Live/published
-  archived
-}
-
 model Topic {
-  id         String   @id @unique @default(uuid())
+  id         String   @id @default(uuid())
   title      String
-  content    String
-  order      Int?     @default(0) // For ordering topics within a gist
+  content    String   @db.Text
+  order      Int      @default(0)
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
-  gist       Gist?    @relation(fields: [gist_id], references: [id], onDelete: Cascade)
-  gist_id    String?
 
+  gist_id String
+  gist    Gist   @relation(fields: [gist_id], references: [id], onDelete: Cascade)
+
+  @@index([gist_id])
+  @@index([gist_id, order])
   @@map("topics")
 }
 
-// Optional: Invitation system for better user management
 model Invitation {
-  id              String       @id @default(uuid())
-  email           String
-  role            Role
-  organization_id String       @map("organization_id")
-  organization    Organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
-  invited_by      String       @map("invited_by")
-  inviter         User         @relation(fields: [invited_by], references: [id])
-  token           String       @unique
-  expires_at      DateTime     @map("expires_at")
-  accepted_at     DateTime?    @map("accepted_at")
-  created_at      DateTime     @default(now())
+  id     String           @id @default(uuid())
+  email  String
+  role   Role
+  status InvitationStatus @default(pending)
 
+  organization_id String
+  organization    Organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+
+  invited_by   String
+  inviter      User   @relation("InviterUser", fields: [invited_by], references: [id])
+  invited_to   String?
+  invited_user User?  @relation("AcceptedInvitation", fields: [invited_to], references: [id])
+
+  token       String    @unique
+  expires_at  DateTime
+  sent_at     DateTime  @default(now())
+  accepted_at DateTime?
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@unique([email, organization_id])
+  @@index([token])
+  @@index([expires_at])
+  @@index([organization_id])
+  @@index([status])
+  @@index([invited_to])
   @@map("invitations")
 }

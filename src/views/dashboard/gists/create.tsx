@@ -1,11 +1,25 @@
 "use client";
 
-import { Stack, Typography } from "@/components";
+import {
+  Button, Stack, Typography, Breadcrumb,
+  BreadcrumbEllipsis,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator, DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DynamicBreadcrumb,
+  Separator,
+} from "@/components";
 import { useEffect, useState } from "react";
 import CreateGistForm from "@/sections/gists/create/create-gist-form";
 import { useGetGists } from "@/services/gist.service";
 import { Loader2 } from "lucide-react";
 import EditTopicsForm from "@/sections/gists/edit/edit-topics-form";
+import { Icon } from "@iconify/react";
 
 export default function CreateGistView({
   slug,
@@ -60,23 +74,25 @@ export default function CreateGistView({
   }
 
   return (
-    <div>
-      {!gistId ? (
-        <Stack gap={3}>
-          <Typography variant="h3">Create Gist</Typography>
-          <CreateGistForm
-            setGistId={setGistId}
+    <Stack direction="col" gap={8}>
+      <Stack direction="col">
+        {!gistId ? (
+          <Stack gap={3}>
+            <Typography variant="h3">Create Gist</Typography>
+            <CreateGistForm
+              setGistId={setGistId}
+              setGistDetails={setGistDetails}
+            />
+          </Stack>
+        ) : (
+          <EditTopicsForm
+            gistDetails={gistDetails}
+            topics={topics}
+            setTopics={setTopics}
             setGistDetails={setGistDetails}
           />
-        </Stack>
-      ) : (
-        <EditTopicsForm
-          gistDetails={gistDetails}
-          topics={topics}
-          setTopics={setTopics}
-          setGistDetails={setGistDetails}
-        />
-      )}
-    </div>
+        )}
+      </Stack>
+    </Stack>
   );
 }
