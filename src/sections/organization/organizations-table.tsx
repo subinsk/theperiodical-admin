@@ -135,7 +135,7 @@ export const OrganizationsTable = ({
                     setOpen={setOpenDeactivateOrganizationDialog}
                     isLoading={isDeactivating}
                     onCancel={() => setIsDeactivating(false)}
-                    onDelete={() => handleDeactivateOrganization(openDeactivateOrganizationDialog.id, openDeactivateOrganizationDialog.status)}
+                    onConfirm={() => handleDeactivateOrganization(openDeactivateOrganizationDialog.id, openDeactivateOrganizationDialog.status)}
                 />)
             }
         </>

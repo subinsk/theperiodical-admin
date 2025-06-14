@@ -14,3 +14,8 @@ export const deleteTopic = async (id: string) => {
   const response = await api.delete(`${endpoints.topic}/${id}`);
   return response.data;
 };
+
+export const reorderTopics = async (payload: any) => {
+  const response = await api.patch(endpoints.reorder, payload);
+  return response.data;
+}

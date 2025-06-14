@@ -35,19 +35,18 @@ import { createGist, updateGist } from "@/services/gist.service";
 import { useGetUsers } from "@/services/user.service";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 export default function CreateGistForm({
-  setGistId,
-  setGistDetails,
   selectedGist,
   setSelectedGist,
-  setOpenEditGistDialog,
+  setGistDetails,
+  setDialogOpen,
 }: {
-  setGistId?: (id: string) => void;
-  setGistDetails: (details: any) => void;
   selectedGist?: any;
   setSelectedGist?: any;
-  setOpenEditGistDialog?: any;
+  setGistDetails?: (details: any) => void;
+  setDialogOpen?: (open: boolean) => void;
 }) {
   // states
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -60,6 +59,7 @@ export default function CreateGistForm({
     role: "content_writer",
     shouldFetch: true,
   })
+  const router = useRouter()
 
   const { data: session, status } = useSession()
 
@@ -92,15 +92,12 @@ export default function CreateGistForm({
     setIsSubmitting(true);
 
     try {
-      if (selectedGist) {
+      if (!!selectedGist) {
         const response = await updateGist(selectedGist.slug, values);
 
-        if (response.success) {
-          console.log(response.data);
-          setGistDetails(response.data);
-        } else {
-          throw new Error("Failed to update the gist");
-        }
+        toast.success("Gist updated successfully");
+        if(setGistDetails) setGistDetails(response.gist);
+        if(setDialogOpen) setDialogOpen(false);
       } else {
         const payload = {
           title: values.title,
@@ -113,11 +110,7 @@ export default function CreateGistForm({
         }
 
         const response = await createGist(payload);
-
-        if (setGistId) {
-          setGistId(response.data.id);
-        }
-        setGistDetails(response.data);
+        router.push(`/dashboard/gists/${response.data.slug}`);
       }
     } catch (e: any) {
       console.log(e);
@@ -134,9 +127,6 @@ export default function CreateGistForm({
       if (setSelectedGist) {
         setSelectedGist(null);
       }
-      if (setOpenEditGistDialog) {
-        setOpenEditGistDialog(false);
-      }
     }
   };
 
@@ -147,6 +137,7 @@ export default function CreateGistForm({
       form.setValue("description", selectedGist.description);
       form.setValue("from", new Date(selectedGist.from));
       form.setValue("to", new Date(selectedGist.to));
+      form.setValue("author", selectedGist.author_id);
     }
   }, [form, selectedGist]);
 

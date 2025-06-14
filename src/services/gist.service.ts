@@ -31,6 +31,11 @@ export function useGetGists(slug?: string) {
   return memoizedValue;
 }
 
+export const getGist = async (slug: string) => {
+  const response = await api.get(`${endpoints.gist}/${slug}`);
+  return response.data;
+  }
+
 export const createGist = async (payload: any) => {
   const response = await api.post(endpoints.gist, payload);
   return response.data;

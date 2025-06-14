@@ -20,7 +20,7 @@ export const ConfirmDialog = ({
   description,
   isLoading,
   onCancel,
-  onDelete,
+  onConfirm,
   setOpen,
 }: {
   open: boolean;
@@ -28,7 +28,7 @@ export const ConfirmDialog = ({
   isLoading: boolean;
   description: string;
   onCancel: () => void;
-  onDelete: () => void;
+  onConfirm: () => void;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }) => {
   return (
@@ -46,7 +46,7 @@ export const ConfirmDialog = ({
           <AlertDialogCancel onClick={()=>{
             setOpen(false);
             onCancel()}}>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={onDelete}>
+          <AlertDialogAction onClick={onConfirm}>
             {isLoading ? (
               <Loader2 className="mr-2 h-10 w-10 animate-spin" />
             ) : (

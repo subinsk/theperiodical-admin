@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
     const gist = await prisma.gist.findFirst({
       where: {
         id: res.gistId,
-        authorId: user.id
+        author_id: user.id
       }
     })
 
@@ -79,13 +79,24 @@ export async function POST(req: NextRequest) {
         },
         { status: 403 }
       )
-    }
+    }    // Get the highest order number from existing topics
+    const highestOrderTopic = await prisma.topic.findFirst({
+      where: {
+        gist_id: res.gistId
+      },
+      orderBy: {
+        order: 'desc'
+      }
+    });
 
-    // Create the topic
+    const nextOrder = (highestOrderTopic?.order ?? -1) + 1;
+
+    // Create the topic with the next order number
     const response = await prisma.topic.create({
       data: {
         title: res.title,
         content: res.content,
+        order: nextOrder,
         gist: {
           connect: {
             id: res.gistId,

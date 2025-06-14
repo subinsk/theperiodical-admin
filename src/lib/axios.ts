@@ -24,6 +24,7 @@ export const fetcher = async (
 export const endpoints = {
   gist: "/gist",
   topic: "/gist/topic",
+  reorder: "/gist/topic/reorder",
   user: "/user",
   invitations: "/invitations",
   organizations: "/organizations",

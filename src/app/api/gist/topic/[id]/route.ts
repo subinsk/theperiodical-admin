@@ -116,7 +116,7 @@ export async function PUT(
         gist: {
           select: {
             id: true,
-            authorId: true,
+            author_id: true,
             title: true
           }
         }
@@ -133,7 +133,7 @@ export async function PUT(
       )
     }
 
-    if (existingTopic.gist?.authorId !== user.id) {
+    if (existingTopic.gist?.author_id !== user.id) {
       return Response.json(
         { 
           message: "You don't have permission to update this topic", 
@@ -222,42 +222,6 @@ export async function DELETE(
           success: false 
         },
         { status: 404 }
-      )
-    }
-
-    // Check if topic exists and user owns the parent gist
-    const existingTopic = await prisma.topic.findUnique({
-      where: {
-        id: params.id,
-      },
-      include: {
-        gist: {
-          select: {
-            id: true,
-            authorId: true,
-            title: true
-          }
-        }
-      }
-    })
-
-    if (!existingTopic) {
-      return Response.json(
-        { 
-          message: "Topic not found", 
-          success: false 
-        },
-        { status: 404 }
-      )
-    }
-
-    if (existingTopic.gist?.authorId !== user.id) {
-      return Response.json(
-        { 
-          message: "You don't have permission to delete this topic", 
-          success: false 
-        },
-        { status: 403 }
       )
     }
 

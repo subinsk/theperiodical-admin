@@ -35,7 +35,7 @@ export const CreateTopicDialog = ({
   gistId,
 }: {
   open: boolean;
-  selectedTopic?: { id: string; title: string; content: string };
+  selectedTopic?: { id: string; title: string; content: string } | null;
   setSelectedTopic?: React.Dispatch<
     React.SetStateAction<{ id: string; title: string; content: string } | null>
   >;
@@ -76,7 +76,6 @@ export const CreateTopicDialog = ({
   const onSubmit = async (values: z.infer<typeof topicSchema>) => {
     try {
       setIsSubmitting(true);
-      console.log(values);
 
       if (selectedTopic) {
         const response = await updateTopic(selectedTopic.id, {
@@ -85,7 +84,6 @@ export const CreateTopicDialog = ({
         });
 
         if (response.success) {
-          toast.success("Topic updated successfully!");
           setTopics((prev) =>
             prev.map((topic) =>
               topic.id === selectedTopic.id
@@ -93,6 +91,7 @@ export const CreateTopicDialog = ({
                 : topic
             )
           );
+          toast.success("Topic updated successfully!");
         } else throw new Error("Failed to update topic");
       } else {
         const response = await addTopic({

@@ -1,8 +1,14 @@
-import { DataTable } from "@/components";
-import { columns } from "./columns";
-import { useGetGists } from "@/services/gist.service";
+import { Button, DataTable } from "@/components";
+import { deleteGist, useGetGists } from "@/services/gist.service";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { ColumnDef } from "@tanstack/react-table";
+import { Gist } from "@prisma/client";
+import { fDate } from "@/utils/format-time";
+import Link from "next/link";
+import { paths } from "@/lib";
+import { Icon } from "@iconify/react/dist/iconify.js";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export default function GistListTableSection() {
   const {
@@ -11,7 +17,96 @@ export default function GistListTableSection() {
     gistsError: error,
     gistsValidating: isValidating,
     gistsEmpty: isEmpty,
+    refetch: refetchGists,
   } = useGetGists();
+
+  // states
+  const [openConfirmGistDeleteDialog, setOpenConfirmGistDeleteDialog] =
+    useState<boolean>(false);
+  const [selectedGistToDelete, setSelectedGistToDelete] =
+    useState<Gist | null>(null);
+  const [isGistDeleteLoading, setIsGistDeleteLoading] =
+    useState<boolean>(false);
+
+  // functions
+  const handleDeleteGist = async () => {
+    try {
+      setIsGistDeleteLoading(true);
+      await deleteGist(selectedGistToDelete?.slug || "");
+      refetchGists();
+      toast.success("Gist deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting gist:", error);
+      toast.error("An error occurred while deleting the gist.");
+    } finally {
+      setOpenConfirmGistDeleteDialog(false);
+      setIsGistDeleteLoading(false);
+      setSelectedGistToDelete(null);
+    }
+  }
+
+  const columns: ColumnDef<Gist>[] = [
+    {
+      accessorKey: "title",
+      header: "Title",
+    },
+    {
+      accessorKey: "from",
+      header: "From",
+      cell(props: any) {
+        return (
+          <div className="text-nowrap">{fDate(props.row.original.from)}</div>
+        );
+      },
+      minSize: 200,
+    },
+    {
+      accessorKey: "to",
+      header: "To",
+      cell(props: any) {
+        return <div className="text-nowrap">{fDate(props.row.original.to)}</div>;
+      },
+    },
+    {
+      accessorKey: "author",
+      header: "Author",
+      cell(props: any) {
+        return <div className="text-nowrap">{props.row.original.author.name}</div>;
+      },
+    },
+    {
+      accessorKey: "assigner",
+      header: "Assigner",
+      cell(props: any) {
+        return <div className="text-nowrap">{props.row.original.assigner.name}</div>;
+      },
+    },
+    {
+      accessorKey: "actions",
+      header: "Actions",
+      cell(props: any) {
+        return (
+          <div className="flex gap-2 items-center">
+            <Link href={paths.dashboard.gists.edit(props.row.original.slug)}>
+              <Button variant="outline" size="icon">
+                <Icon icon="tabler:pencil" width={16} />
+              </Button>
+            </Link>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                setOpenConfirmGistDeleteDialog(true);
+                setSelectedGistToDelete(props.row.original);
+              }}
+            >
+              <Icon icon="tabler:trash" width={16} />
+            </Button>
+          </div>
+        );
+      },
+    },
+  ];
 
   // const data = [
   //   {
@@ -105,6 +200,15 @@ export default function GistListTableSection() {
   return (
     <div className="container mx-auto py-10">
       <DataTable columns={columns} data={data} />
+      <ConfirmDialog
+        open={openConfirmGistDeleteDialog && !!selectedGistToDelete}
+        setOpen={setOpenConfirmGistDeleteDialog}
+        title="Delete Gist"
+        description="Are you sure you want to delete this gist? This action cannot be undone."
+        isLoading={isGistDeleteLoading}
+        onConfirm={handleDeleteGist}
+        onCancel={() => setOpenConfirmGistDeleteDialog(false)}
+      />
     </div>
   );
 }

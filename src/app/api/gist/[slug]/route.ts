@@ -2,7 +2,7 @@ import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma-client"
 import { slugify } from "@/utils"
-import { NextRequest } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 
 export async function GET(
   req: NextRequest,
@@ -16,8 +16,8 @@ export async function GET(
       include: {
         topics: {
           orderBy: {
-            createdAt: 'asc'
-          }
+            order: 'asc'
+          },
         },
         author: {
           select: {
@@ -32,7 +32,7 @@ export async function GET(
     })
 
     if (!response) {
-      return Response.json(
+      return NextResponse.json(
         {
           message: "Gist not found",
           success: false,
@@ -41,15 +41,15 @@ export async function GET(
       )
     }
 
-    return Response.json({
+    return NextResponse.json({
       message: "Gist fetched successfully!",
       success: true,
-      gists: [response],
+      gist: response,
     })
 
   } catch (error) {
     console.error('Error fetching gist:', error)
-    return Response.json(
+    return NextResponse.json(
       {
         message: "Internal server error",
         success: false,
@@ -69,10 +69,10 @@ export async function PUT(
 
     // Check if user is authenticated
     if (!session || !session.user) {
-      return Response.json(
-        { 
-          message: "Unauthorized - Please sign in", 
-          success: false 
+      return NextResponse.json(
+        {
+          message: "Unauthorized - Please sign in",
+          success: false
         },
         { status: 401 }
       )
@@ -80,17 +80,6 @@ export async function PUT(
 
     // Get request body
     const res = await req.json()
-
-    // Validate required fields
-    if (!res.title || !res.from || !res.to) {
-      return Response.json(
-        { 
-          message: "Missing required fields: title, from, to", 
-          success: false 
-        },
-        { status: 400 }
-      )
-    }
 
     // Get user from database
     const user = await prisma.user.findUnique({
@@ -100,10 +89,10 @@ export async function PUT(
     })
 
     if (!user) {
-      return Response.json(
-        { 
-          message: "User not found in database", 
-          success: false 
+      return NextResponse.json(
+        {
+          message: "User not found in database",
+          success: false
         },
         { status: 404 }
       )
@@ -113,15 +102,15 @@ export async function PUT(
     const existingGist = await prisma.gist.findFirst({
       where: {
         slug: params.slug,
-        authorId: user.id
+        author_id: user.id
       }
     })
 
     if (!existingGist) {
-      return Response.json(
-        { 
-          message: "Gist not found or you don't have permission to update it", 
-          success: false 
+      return NextResponse.json(
+        {
+          message: "Gist not found or you don't have permission to update it",
+          success: false
         },
         { status: 403 }
       )
@@ -151,15 +140,15 @@ export async function PUT(
       }
     })
 
-    return Response.json({
+    return NextResponse.json({
       message: "Gist updated successfully!",
       success: true,
-      data: response,
+      gist: response,
     })
 
   } catch (error) {
     console.error('Error updating gist:', error)
-    return Response.json(
+    return NextResponse.json(
       {
         message: "Internal server error",
         success: false,
@@ -180,10 +169,10 @@ export async function DELETE(
 
     // Check if user is authenticated
     if (!session || !session.user) {
-      return Response.json(
-        { 
-          message: "Unauthorized - Please sign in", 
-          success: false 
+      return NextResponse.json(
+        {
+          message: "Unauthorized - Please sign in",
+          success: false
         },
         { status: 401 }
       )
@@ -197,10 +186,10 @@ export async function DELETE(
     })
 
     if (!user) {
-      return Response.json(
-        { 
-          message: "User not found in database", 
-          success: false 
+      return NextResponse.json(
+        {
+          message: "User not found in database",
+          success: false
         },
         { status: 404 }
       )
@@ -210,15 +199,15 @@ export async function DELETE(
     const existingGist = await prisma.gist.findFirst({
       where: {
         slug: params.slug,
-        authorId: user.id
+        author_id: user.id
       }
     })
 
     if (!existingGist) {
-      return Response.json(
-        { 
-          message: "Gist not found or you don't have permission to delete it", 
-          success: false 
+      return NextResponse.json(
+        {
+          message: "Gist not found or you don't have permission to delete it",
+          success: false
         },
         { status: 403 }
       )
@@ -231,7 +220,7 @@ export async function DELETE(
       },
     })
 
-    return Response.json({
+    return NextResponse.json({
       message: "Gist deleted successfully!",
       success: true,
       data: response,
@@ -239,7 +228,7 @@ export async function DELETE(
 
   } catch (error) {
     console.error('Error deleting gist:', error)
-    return Response.json(
+    return NextResponse.json(
       {
         message: "Internal server error",
         success: false,

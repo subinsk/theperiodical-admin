@@ -9,7 +9,8 @@ export async function GET() {
   const response = await prisma.gist.findMany({
     include: {
       topics: true,
-      author: true
+      author: true,
+      assigner: true,
     },
   });
 
@@ -56,7 +57,6 @@ export async function POST(req: NextRequest) {
         description: res.description,
         from: new Date(res.from),
         to: new Date(res.to),
-        assigned_by: res.assignedBy,
         organization:{
           connect: {
             id: res.organizationId
@@ -67,6 +67,9 @@ export async function POST(req: NextRequest) {
             id: res.authorId
           }
         },
+        assigner:{
+          connect:{id: res.assignedBy}
+        }
       },
       include: {
         author: {

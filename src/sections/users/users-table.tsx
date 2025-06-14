@@ -208,7 +208,7 @@ export const UsersTable = ({
           setOpen={setOpenRemoveInvitationDialog}
           isLoading={isRemovingInvitation}
           onCancel={() => setOpenRemoveInvitationDialog(null)}
-          onDelete={() => handleRemoveInvitation(openRemoveInvitationDialog.id)}
+          onConfirm={() => handleRemoveInvitation(openRemoveInvitationDialog.id)}
         />
       }
     </>

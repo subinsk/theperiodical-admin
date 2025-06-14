@@ -1,9 +1,10 @@
 import CreateGistView from "@/views/dashboard/gists/create";
+import EditGistView from "@/views/dashboard/gists/edit";
 
 export default function EditGistPage({
   params,
 }: {
   params: { slug: string };
 }): JSX.Element {
-  return <CreateGistView slug={params.slug} />;
+  return <EditGistView slug={params.slug} />;
 }
