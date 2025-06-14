@@ -30,7 +30,7 @@ export default function SettingsView() {
         status === 'authenticated' &&
         <>
           <Tabs defaultValue="profile">
-            <TabsList className={`grid grid-cols-${session?.user.role === 'super_admin' ? '12' : '2'} mx-auto w-1/2`}>
+            <TabsList className={`grid grid-cols-${session?.user.role === 'super_admin' ? '3' : '2'} mx-auto w-1/2`}>
               <TabsTrigger value="profile" className={`${session?.user.role === 'content_writer' ? 'col-span-2' : 'col-span-1'}`}>Profile</TabsTrigger>
               {
                 session?.user.role === 'super_admin' &&

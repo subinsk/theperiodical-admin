@@ -3,6 +3,7 @@ import { authOptions } from "@/lib/auth"
 import { prisma } from "@/lib/prisma-client"
 import { slugify } from "@/utils"
 import { NextRequest, NextResponse } from "next/server"
+import { ROLE_LEVELS, Role } from "@/constants/roles"
 
 export async function GET(
   req: NextRequest,
@@ -98,18 +99,39 @@ export async function PUT(
       )
     }
 
-    // Check if gist exists and belongs to the user
+    // Check if gist exists and get author details
     const existingGist = await prisma.gist.findFirst({
       where: {
         slug: params.slug,
-        author_id: user.id
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            role: true
+          }
+        }
       }
     })
 
     if (!existingGist) {
       return NextResponse.json(
         {
-          message: "Gist not found or you don't have permission to update it",
+          message: "Gist not found",
+          success: false
+        },
+        { status: 404 }
+      )
+    }
+
+    // Check if user is the author or has higher role level    
+    const userRoleLevel = ROLE_LEVELS[user.role as Role];
+    const authorRoleLevel = ROLE_LEVELS[existingGist.author.role as Role];
+    
+    if (user.id !== existingGist.author.id && userRoleLevel <= authorRoleLevel) {
+      return NextResponse.json(
+        {
+          message: "You don't have permission to update this gist",
           success: false
         },
         { status: 403 }
@@ -195,18 +217,39 @@ export async function DELETE(
       )
     }
 
-    // Check if gist exists and belongs to the user
+    // Check if gist exists and get author details
     const existingGist = await prisma.gist.findFirst({
       where: {
         slug: params.slug,
-        author_id: user.id
+      },
+      include: {
+        author: {
+          select: {
+            id: true,
+            role: true
+          }
+        }
       }
     })
 
     if (!existingGist) {
       return NextResponse.json(
         {
-          message: "Gist not found or you don't have permission to delete it",
+          message: "Gist not found",
+          success: false
+        },
+        { status: 404 }
+      )
+    }
+
+    // Check if user is the author or has higher role level    
+    const userRoleLevel = ROLE_LEVELS[user.role as Role];
+    const authorRoleLevel = ROLE_LEVELS[existingGist.author.role as Role];
+    
+    if (user.id !== existingGist.author.id && userRoleLevel <= authorRoleLevel) {
+      return NextResponse.json(
+        {
+          message: "You don't have permission to delete this gist",
           success: false
         },
         { status: 403 }
@@ -225,7 +268,6 @@ export async function DELETE(
       success: true,
       data: response,
     })
-
   } catch (error) {
     console.error('Error deleting gist:', error)
     return NextResponse.json(

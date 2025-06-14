@@ -36,6 +36,7 @@ import { useGetUsers } from "@/services/user.service";
 import { useSession } from "next-auth/react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { Loader } from "@/components/ui/loader";
 
 export default function CreateGistForm({
   selectedGist,
@@ -50,6 +51,7 @@ export default function CreateGistForm({
 }) {
   // states
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [loadNextRoute, setLoadNextRoute] = useState<boolean>(false);
 
   // hooks
   const {
@@ -96,8 +98,8 @@ export default function CreateGistForm({
         const response = await updateGist(selectedGist.slug, values);
 
         toast.success("Gist updated successfully");
-        if(setGistDetails) setGistDetails(response.gist);
-        if(setDialogOpen) setDialogOpen(false);
+        if (setGistDetails) setGistDetails(response.gist);
+        if (setDialogOpen) setDialogOpen(false);
       } else {
         const payload = {
           title: values.title,
@@ -110,6 +112,7 @@ export default function CreateGistForm({
         }
 
         const response = await createGist(payload);
+        setLoadNextRoute(true)
         router.push(`/dashboard/gists/${response.data.slug}`);
       }
     } catch (e: any) {
@@ -142,208 +145,213 @@ export default function CreateGistForm({
   }, [form, selectedGist]);
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="grid grid-cols-12 gap-8">
-          <div className="col-span-9">
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <InputField id="title" placeholder="Title" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="col-span-3">
-            <FormField
-              control={form.control}
-              name="author"
-              render={({ field }) => (
-                <FormItem className="flex flex-col gap-3">
-                  <FormLabel>Assigned To</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          className={cn(
-                            "w-[200px] justify-between",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value
-                            ? users.map((user: any) => {
-                              if (user.id === field.value) {
-                                return user.name;
-                              }
-                            })
-                            : "Select author"}
-                          <ChevronsUpDown className="opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[200px] p-0">
-                      <Command>
-                        <CommandInput
-                          placeholder="Search author..."
-                          className="h-9"
+    loadNextRoute ?
+      <div className="h-screen w-full flex justify-center items-center">
+        <Loader />
+      </div>
+      :
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+          <div className="grid grid-cols-12 gap-8">
+            <div className="col-span-9">
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Title</FormLabel>
+                    <FormControl>
+                      <InputField id="title" placeholder="Title" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="col-span-3">
+              <FormField
+                control={form.control}
+                name="author"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col gap-3">
+                    <FormLabel>Assigned To</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn(
+                              "w-[200px] justify-between",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value
+                              ? users.map((user: any) => {
+                                if (user.id === field.value) {
+                                  return user.name;
+                                }
+                              })
+                              : "Select author"}
+                            <ChevronsUpDown className="opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[200px] p-0">
+                        <Command>
+                          <CommandInput
+                            placeholder="Search author..."
+                            className="h-9"
+                          />
+                          <CommandList>
+                            <CommandEmpty>No author found.</CommandEmpty>
+                            <CommandGroup>
+                              {users
+                                .map((user: any) => (
+                                  <CommandItem
+                                    value={user.name}
+                                    key={user.id}
+                                    onSelect={() => {
+                                      if (user.id === field.value) {
+                                        form.setValue("author", "");
+                                      }
+                                      else {
+                                        form.setValue("author", user.id)
+                                      }
+                                    }}
+                                  >
+                                    {user.name}
+                                    <Check
+                                      className={cn(
+                                        "ml-auto",
+                                        user.id === field.value
+                                          ? "opacity-100"
+                                          : "opacity-0"
+                                      )}
+                                    />
+                                  </CommandItem>
+                                ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="col-span-12">
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        id="description"
+                        placeholder="Description"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="col-span-6">
+              <FormField
+                control={form.control}
+                name="from"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>From</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-[240px] pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date: Date) => date < new Date("1900-01-01")}
+                          initialFocus
                         />
-                        <CommandList>
-                          <CommandEmpty>No author found.</CommandEmpty>
-                          <CommandGroup>
-                            {users
-                              .map((user: any) => (
-                                <CommandItem
-                                  value={user.name}
-                                  key={user.id}
-                                  onSelect={() => {
-                                    if (user.id === field.value) {
-                                      form.setValue("author", "");
-                                    }
-                                    else {
-                                      form.setValue("author", user.id)
-                                    }
-                                  }}
-                                >
-                                  {user.name}
-                                  <Check
-                                    className={cn(
-                                      "ml-auto",
-                                      user.id === field.value
-                                        ? "opacity-100"
-                                        : "opacity-0"
-                                    )}
-                                  />
-                                </CommandItem>
-                              ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="col-span-6">
+              <FormField
+                control={form.control}
+                name="to"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>To</FormLabel>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-[240px] pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "PPP")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date: Date) => date < new Date("1900-01-01")}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className="col-span-12">
+              <Button className="w-full">
+                {isSubmitting && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                {getButtonText()}
+              </Button>
+            </div>
           </div>
-          <div className="col-span-12">
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      id="description"
-                      placeholder="Description"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="col-span-6">
-            <FormField
-              control={form.control}
-              name="from"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>From</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-[240px] pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date: Date) => date < new Date("1900-01-01")}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="col-span-6">
-            <FormField
-              control={form.control}
-              name="to"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>To</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-[240px] pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP")
-                          ) : (
-                            <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date: Date) => date < new Date("1900-01-01")}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-          <div className="col-span-12">
-            <Button className="w-full">
-              {isSubmitting && (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              {getButtonText()}
-            </Button>
-          </div>
-        </div>
-      </form>
-    </Form>
+        </form>
+      </Form>
   );
 }

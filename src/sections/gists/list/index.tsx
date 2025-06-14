@@ -9,14 +9,23 @@ import Link from "next/link";
 import { paths } from "@/lib";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { Loader } from "@/components/ui/loader";
+import { useSession } from "next-auth/react";
+import { ROLES_MAP } from "@/constants";
 
 export default function GistListTableSection() {
+  // hooks
+  const {
+    data: session,
+    status,
+  } = useSession()
+
   const {
     gists: data,
-    gistsLoading: isLoading,
-    gistsError: error,
-    gistsValidating: isValidating,
-    gistsEmpty: isEmpty,
+    gistsLoading,
+    gistsError,
+    gistsValidating,
+    gistsEmpty,
     refetch: refetchGists,
   } = useGetGists();
 
@@ -27,6 +36,7 @@ export default function GistListTableSection() {
     useState<Gist | null>(null);
   const [isGistDeleteLoading, setIsGistDeleteLoading] =
     useState<boolean>(false);
+  const [initialLoading, setInitialLoading] = useState<boolean>(true);
 
   // functions
   const handleDeleteGist = async () => {
@@ -83,8 +93,21 @@ export default function GistListTableSection() {
     },
     {
       accessorKey: "actions",
-      header: "Actions",
-      cell(props: any) {
+      header: "Actions", cell(props: any) {
+        const authorRole = props.row.original.author.role as keyof typeof ROLES_MAP;
+        const currUserRole = session?.user.role as keyof typeof ROLES_MAP;
+
+        const authorRoleLevel = ROLES_MAP[authorRole].level;
+        const currUserRoleLevel = ROLES_MAP[currUserRole].level;
+
+
+        const canEdit = session?.user.id === props.row.original.author.id ||
+          currUserRoleLevel > authorRoleLevel;
+
+        if (!canEdit) {
+          return null;
+        }
+
         return (
           <div className="flex gap-2 items-center">
             <Link href={paths.dashboard.gists.edit(props.row.original.slug)}>
@@ -107,6 +130,13 @@ export default function GistListTableSection() {
       },
     },
   ];
+
+  // effects
+  useEffect(() => {
+    if (!gistsLoading && initialLoading) {
+      setInitialLoading(false);
+    }
+  }, [gistsLoading])
 
   // const data = [
   //   {
@@ -198,17 +228,19 @@ export default function GistListTableSection() {
   // ];
 
   return (
-    <div className="container mx-auto py-10">
-      <DataTable columns={columns} data={data} />
-      <ConfirmDialog
-        open={openConfirmGistDeleteDialog && !!selectedGistToDelete}
-        setOpen={setOpenConfirmGistDeleteDialog}
-        title="Delete Gist"
-        description="Are you sure you want to delete this gist? This action cannot be undone."
-        isLoading={isGistDeleteLoading}
-        onConfirm={handleDeleteGist}
-        onCancel={() => setOpenConfirmGistDeleteDialog(false)}
-      />
-    </div>
+    initialLoading ?
+      <Loader /> :
+      <div className="container mx-auto py-10">
+        <DataTable columns={columns} data={data} />
+        <ConfirmDialog
+          open={openConfirmGistDeleteDialog && !!selectedGistToDelete}
+          setOpen={setOpenConfirmGistDeleteDialog}
+          title="Delete Gist"
+          description="Are you sure you want to delete this gist? This action cannot be undone."
+          isLoading={isGistDeleteLoading}
+          onConfirm={handleDeleteGist}
+          onCancel={() => setOpenConfirmGistDeleteDialog(false)}
+        />
+      </div>
   );
 }
